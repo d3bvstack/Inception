@@ -1,0 +1,26 @@
+services:
+  mariadb:
+    image: mariadb:10.5
+    container_name: mariadb
+    restart: always
+    environment:
+      - MARIADB_ROOT_PASSWORD=root
+    networks:
+      - backend_net
+  wordpress-php:
+    image: wordpress:php8.2-fpm
+    container_name: wordpress-php
+    networks:
+      - frontend_net
+      - backend_net
+    restart: always
+  nginx:
+    image: nginx
+    container_name: nginx
+    networks:
+      - frontend_net
+    restart: always
+
+networks:
+  backend_net: {}
+  frontend_net: {}
