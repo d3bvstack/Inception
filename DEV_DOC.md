@@ -5,20 +5,71 @@ USER_LOGIN: Name that will be used for domain name
 DOMAIN_NAME: Domain name of resulting website
 
 # Networks
-# Frontend network that connects nginx <-> internet and nginx <-> php-fpm
+Frontend network that connects nginx <-> internet and nginx <-> php-fpm
 NETWORK_FRONTEND_NAME: name that will be given to the frontend network
 NETWORK_FRONTEND_SUBNET: subnet that frontend network will use
 NETWORK_FRONTEND_GATEWAY: frontend network gateway
 NETWORK_FRONTEND_NGINX_IP: IP of NGINX container
 NETWORK_FRONTEND_PHPFPM_IP: IP of container with the phpfpm runner
-# Backend network that connects php-fpm <-> mariadb
+
+Backend network that connects php-fpm <-> mariadb
 NETWORK_BACKEND_NAME: name that will be given to the backend network
 NETWORK_BACKEND_SUBNET: subnet that backend network will use
 NETWORK_BACKEND_GATEWAY: backend network gateway
 NETWORK_BACKEND_PHPFPM_IP: IP of container with the phpfpm runner
 NETWORK_BACKEND_DB_IP: IP of container with the database container
 
-# Volumes
-VOLUME_DB_NAME: name for the database
-VOLUME_DB_MOUNTPOINT: route that will be used as volume where db data is
-VOLUME_DB_HOST_PATH: route on host that will be used as volume where db data will be saved
+Volumes
+VOLUME_DB_NAME: name for the database volume
+VOLUME_DB_MOUNTPOINT: route on container where the volume will be mounted
+VOLUME_DB_HOST_PATH: route on host where the volume will be saved
+VOLUME_WP_NAME: name for the wordpress volume
+VOLUME_WP_MOUNTPOINT: route on container where the volume will be mounted
+VOLUME_WP_HOST_PATH: route on host where the volume will be saved
+
+MariaDB
+MDB_BUILD_CONTEXT: Context for mariadb image build
+MDB_DOCKERFILE: Name of mariadb dockefile name
+MDB_IMAGE_REPO: Name of Image repo
+MDB_IMAGE_TAG: Name of Image tag
+MDB_CONTAINER_NAME: Name for the new container
+
+-----
+
+- MDB_CONFIG_ENV=##
+- MDB_ROOT_PASSWORD=## SECRET
+- MDB_ADMIN=##
+- MDB_ADMIN_PASSWORD=## SECRET
+- MDB_CHARSET=##
+- MDB_COLLATION=##
+- MDB_ENGINE_PORT=##
+
+-----
+
+WP_DB_NAME: name for wordpress database on creation and for wp installation
+WP_DB_ADMIN: name for the mariadb user that will have privileges over the wordpress db
+WP_DB_ADMIN_PASSWORD=## SECRET
+WP_DB_CHARSET: wordpress database charset
+WP_DB_COLLATION: wordpress database collation
+
+WP_BUILD_CONTEXT: Context for wordpress image build
+WP_DOCKERFILE: Name of wordpress dockefile name
+WP_IMAGE_REPO: Name of Image repo
+WP_IMAGE_TAG: Name of Image tag
+WP_CONTAINER_NAME: name of wordpress container
+
+-----
+- WP_CONFIG_ENV="config.env"
+- PHPFPM_LISTEN_PORT=9000
+- PHPFPM_USER=# Need info, used in php-fpm.conf, nginx default, don't know if www-data or nginx
+- NGINX="${NGINX_CONTAINER_NAME}"
+- NGINX_PORT="${NGINX_PHP_PORT}" # 9000
+- DB_HOST="${MARIADB_CONTAINER_NAME}"
+- DB_SERVICE_PORT=3306
+- DB_NAME="${MARIADB_WPDB_NAME}"
+- DB_USER="${MARIADB_WPDB_ADMIN}"
+- DB_USER_PASSWORD=## SECRET
+- WP_USERS_CREATE="owner:administrator:owner@mail.com,demo:editor:demo@mail.com" # username:role:mail
+- WP_WEBROOT="/var/www/${DOMAIN_NAME}" # Same as WP_VOL_MOUNTPOINT
+
+-----
