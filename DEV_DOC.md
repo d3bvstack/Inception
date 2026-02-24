@@ -46,6 +46,7 @@ MDB_CONTAINER_NAME: Name for the new container
 
 -----
 
+Wordpress
 WP_DB_NAME: name for wordpress database on creation and for wp installation
 WP_DB_ADMIN: name for the mariadb user that will have privileges over the wordpress db
 WP_DB_ADMIN_PASSWORD=## SECRET
@@ -59,17 +60,24 @@ WP_IMAGE_TAG: Name of Image tag
 WP_CONTAINER_NAME: name of wordpress container
 
 -----
-- WP_CONFIG_ENV="config.env"
-- PHPFPM_LISTEN_PORT=9000
-- PHPFPM_USER=# Need info, used in php-fpm.conf, nginx default, don't know if www-data or nginx
-- NGINX="${NGINX_CONTAINER_NAME}"
-- NGINX_PORT="${NGINX_PHP_PORT}" # 9000
-- DB_HOST="${MARIADB_CONTAINER_NAME}"
-- DB_SERVICE_PORT=3306
-- DB_NAME="${MARIADB_WPDB_NAME}"
-- DB_USER="${MARIADB_WPDB_ADMIN}"
-- DB_USER_PASSWORD=## SECRET
-- WP_USERS_CREATE="owner:administrator:owner@mail.com,demo:editor:demo@mail.com" # username:role:mail
-- WP_WEBROOT="/var/www/${DOMAIN_NAME}" # Same as WP_VOL_MOUNTPOINT
+- WP_CONFIG_ENV=##
+- PHPFPM_LISTEN_PORT=##
+- PHPFPM_USER=##
+- NGINX=##
+- NGINX_PORT=##
+- DB_HOST=##
+- DB_SERVICE_PORT=##
+- DB_NAME=##
+- DB_USER=##
+- DB_USER_PASSWORD=##
+- WP_USERS_CREATE=##
+- WP_WEBROOT=##
 
 -----
+
+Nginx
+NGINX_BUILD_CONTEXT: context for nginx image build
+NGINX_DOCKERFILE: Name of dockerfile for nginx image
+NGINX_IMAGE_REPO: nginx image repo name
+NGINX_IMAGE_TAG: nginx image tag
+NGINX_CONTAINER_NAME: container name of instantiating the container
