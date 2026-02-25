@@ -23,8 +23,16 @@ services:
     restart: always
 
   nginx:
-    image: nginx
+    build:
+      context: ./requirements/nginx
+      dockerfile: Dockerfile
+      args:
+        SSL_KEY: ${SSL_KEY}
+        SSL_CERT: ${SSL_CERT}
+    image: nginx:inception
     container_name: nginx
+    env_file:
+      - ./requirements/nginx/config.env
     ports:
       - "8080:80"
     networks:

@@ -1,0 +1,163 @@
+# ==============================================================================
+# Nginx Virtual Host Configuration Template (Architectural Guide)
+# ==============================================================================
+# This template is processed by 'envsubst' to inject environment variables.
+# It defines how traffic flows through the server, from HTTP to PHP-FPM.
+#
+# REQUEST LIFECYCLE:
+# 1. User hits Port 80  -> Redirected to Port 443 (HTTPS)
+# 2. SSL Handshake      -> Validates certs and establishes encryption
+# 3. URI Resolution     -> Checks for static files, then passes to PHP if needed
+#
+# ENVIRONMENT VARIABLES:
+#   - ROOT_DOMAIN:   Main domain (e.g., login.42.fr).
+#   - NGINX_IP:      Container's IPv4 address or hostname.
+#   - PHP_FPM_IP:    Hostname of the backend service (e.g., 'wordpress').
+#   - PHP_FPM_PORT:  Listening port of PHP-FPM (standard: 9000).
+#   - SSL_CERT_PATH: Path to the public certificate (.crt).
+#   - SSL_KEY_PATH:  Path to the private key (.key).
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. HTTP SERVER (REDIRECTOR)
+# ------------------------------------------------------------------------------
+server {
+    # 'reuseport' allows multiple workers to listen on the same port,
+    # significantly improving performance on multi-core systems.
+    listen 80 reuseport;
+    listen [::]:80 reuseport;
+
+    server_name ${z} www.${ROOT_DOMAIN} ${NGINX_IP};
+
+    # Enforce HTTPS globally. $host preserves the requested domain name.
+    return 301 https://$host$request_uri;
+
+    # Block access to sensitive hidden files (.git, .env) immediately.
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+}
+
+# ------------------------------------------------------------------------------
+# 2. HTTPS SERVER (APPLICATION)
+# ------------------------------------------------------------------------------
+server {
+    listen ${NGINX_OUT_PORT} ssl reuseport;
+    listen [::]:${NGINX_OUT_PORT} ssl reuseport;
+
+    # SSL Certificates (Injected via Environment)
+    ssl_certificate     ${SSL_CERT_PATH}/${SSL_CERT};
+    ssl_certificate_key ${SSL_KEY_PATH}/${SSL_KEY};
+
+    server_name ${ROOT_DOMAIN} www.${ROOT_DOMAIN}; # Maybe need IP of NGINX container
+
+    # DATA HIERARCHY
+    # --------------------------------------------------------------------------
+    set $base ${NGINX_VOLUME_MOUNTPOINT};
+    root $base/public;
+    index index.php index.html;
+
+    # SECURITY HEADERS (OWASP Recommended)
+    # Headers sent for all requests no matter the type
+    # These are inherited by any lower block
+    # --------------------------------------------------------------------------
+    # Clickjacking protection: Prevent the site from being rendered in an <iframe>.
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    # XSS Protection: Instructs browsers to stop pages from loading when they detect XSS.
+    add_header X-XSS-Protection "1; mode=block" always;
+    # Content Type Sniffing: Prevent browsers from trying to guess the MIME type.
+    add_header X-Content-Type-Options "nosniff" always;
+    # Referrer Policy: Controls how much referrer information is passed to other sites.
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+    # CSP: Basic policy to only allow resources from 'self' and trusted origins.
+    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
+
+    # LOCATIONS & ROUTING
+    # --------------------------------------------------------------------------
+    # Entry point for all requests.
+    location / {
+        # try_files logic:
+        # 1. Check if the exact URI matches a file ($uri)
+        # 2. Check if the URI matches a directory ($uri/)
+        # 3. Fallback to index.php with the original arguments (standard for CMS/WordPress)
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    # PHP-FPM BRIDGE (The Gateway to Code Execution)
+    # --------------------------------------------------------------------------
+    location ~ \.php$ {
+        # Block invalid PHP requests before they reach the backend.
+        try_files $fastcgi_script_name =404;
+
+        # Include standard FastCGI parameters (METHOD, QUERY_STRING, etc).
+        include                     /etc/nginx/fastcgi_params;
+
+        # Connect to the PHP container via TCP.
+        # fastcgi_index -> request to "any/" will create an internal redirect to
+        # /index.php, the location will match and fastcgi will be called
+        fastcgi_pass                ${WORDPRESS_PHP}:${WORDPRESS_PHP_PORT};
+        fastcgi_index               index.php;
+
+        # PATH RESOLUTION:
+        # $realpath_root resolves symbolic links, ensuring PHP always uses the
+        # absolute physical path. This is crucial for zero-downtime deployments.
+        fastcgi_param DOCUMENT_ROOT     $realpath_root;
+        fastcgi_param SCRIPT_FILENAME   $realpath_root$fastcgi_script_name;
+
+        # BUFFERING:
+        # Prevents "upstream sent too big header" errors by sizing the buffers
+        # to handle large cookies or session data.
+        fastcgi_buffer_size         32k;
+        fastcgi_buffers             8 16k;
+
+        # PHP SECURITY:
+        # 'open_basedir' restricts PHP's filesystem access to specific hierarchies.
+        fastcgi_param PHP_ADMIN_VALUE "open_basedir=$base/:/usr/lib/php/:/tmp/";
+    }
+
+    # PERFORMANCE: Static asset caching
+    # --------------------------------------------------------------------------
+    # Instructs the BROWSER to cache media and assets for 30 days.
+    # significantly reduces server load and bandwidth usage.
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|otf)$ {
+        expires 180d;
+        add_header Cache-Control "public, no-transform"; # public: can be stored by any intermediary, no-transform: the intermediaries cannot modify content to optimize it
+        log_not_found off;
+        access_log off;
+    }
+
+    # Security: Final catch-all for hidden files.
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+
+    # Prevent PHP from running from upload directories
+    location ~* /(?:uploads|files)/.*\.php$ {
+        deny all;
+    }
+
+    # Don't log access to favicon.ico and robots.txt
+    location = /favicon.ico {
+		log_not_found off;
+		access_log off;
+	}
+
+	location = /robots.txt {
+		allow all;
+		log_not_found off;
+		access_log off;
+	}
+}
+
+# ==============================================================================
+# Troubleshooting & Validation
+# ==============================================================================
+# 1. Configuration Syntax:  nginx -t
+# 2. Variable Injection:    envsubst < template.conf > default.conf
+# 3. Connection Test:      nc -zv ${PHP_FPM_IP} ${PHP_FPM_PORT}
+# 4. Logs:                 tail -f /var/log/nginx/error.log
+# ==============================================================================
