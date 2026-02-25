@@ -1,0 +1,22 @@
+networks:
+
+  # Configuration for backend network
+  backend_net:
+    name: backend_net
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.28.0.0/28 # 0-15
+          gateway: 172.28.0.1
+
+
+  # Configuration for the frontend network
+  frontend_net:
+    name: frontend_net
+    driver: bridge
+    internal: false
+    ipam:
+      config:
+        - subnet: 172.28.0.16/28 # 16-32
+          gateway: 172.28.0.17

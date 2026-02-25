@@ -1,3 +1,6 @@
+include:
+  - networks/docker-compose.yml
+
 services:
   mariadb:
     image: mariadb:10.5
@@ -6,21 +9,25 @@ services:
     environment:
       - MARIADB_ROOT_PASSWORD=root
     networks:
-      - backend_net
+      backend_net:
+        ipv4_address: 172.28.0.2
+
   wordpress-php:
     image: wordpress:php8.2-fpm
     container_name: wordpress-php
     networks:
-      - frontend_net
-      - backend_net
+      frontend_net:
+        ipv4_address: 172.28.0.18
+      backend_net:
+        ipv4_address: 172.28.0.3
     restart: always
+
   nginx:
     image: nginx
     container_name: nginx
+    ports:
+      - "8080:80"
     networks:
-      - frontend_net
+      frontend_net:
+        ipv4_address: 172.28.0.19
     restart: always
-
-networks:
-  backend_net: {}
-  frontend_net: {}
