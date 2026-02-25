@@ -1,20 +1,70 @@
-Services provided by the infrastructure are
-- nginx as reverse proxy
-- wordpress for CMS
-- PHPfpm for php runtime
-- MariaDB for manageing mysql database
+# User Documentation
 
-use make all/up/inception to get the infrastructure up,
-make stop for stopping the infrastructure,
-make restart to restart containers and infrastructure,
-make fclean to stop, remove containers, networks and images
+## Overview
 
-Once launched, you can access the page at dbarba-v.42.fr and access the admin panel via dbarba.42.fr/wp-admin or dbarba.42.fr/wp-login.php and entering valid credentials.
+This infrastructure runs a WordPress site backed by the following services:
 
-Credentials should be at /secrets as separate files
-- ./secrets/database/dbuser_password
-- ./secrets/database/root_password
-- ./secrets/wordpress/admin_password
-- ./secrets/wordpress/editor_password
+| Service  | Role                  |
+|----------|-----------------------|
+| NGINX    | Reverse proxy         |
+| WordPress | CMS                  |
+| PHP-FPM  | PHP runtime           |
+| MariaDB  | MySQL database        |
 
-Once started you can verify that the services are running correctly by using make ps or docker compose -f ./src/docker-compose.yml ps
+---
+
+## Getting Started
+
+### Start the infrastructure
+
+```sh
+make all
+```
+
+> Aliases: `make up` or `make inception`
+
+### Stop, restart, or clean up
+
+| Command        | Effect                                              |
+|----------------|-----------------------------------------------------|
+| `make stop`    | Stop all running containers                         |
+| `make restart` | Restart all containers                              |
+| `make fclean`  | Stop and remove all containers, networks, and images|
+
+---
+
+## Accessing the Site
+
+| URL                              | Description        |
+|----------------------------------|--------------------|
+| `https://dbarba-v.42.fr`         | Main site          |
+| `https://dbarba-v.42.fr/wp-admin`     | WordPress admin panel |
+| `https://dbarba-v.42.fr/wp-login.php` | WordPress login page  |
+
+---
+
+## Credentials
+
+Secrets are stored as plain-text files under `./secrets/`:
+
+```
+secrets/
+├── database/
+│   ├── dbuser_password
+│   └── root_password
+└── wordpress/
+    ├── admin_password
+    └── editor_password
+```
+
+---
+
+## Verifying the Infrastructure
+
+Check that all services are running:
+
+```sh
+make ps
+# or
+docker compose -f ./srcs/docker-compose.yml ps
+```
