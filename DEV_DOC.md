@@ -81,3 +81,23 @@ NGINX_DOCKERFILE: Name of dockerfile for nginx image
 NGINX_IMAGE_REPO: nginx image repo name
 NGINX_IMAGE_TAG: nginx image tag
 NGINX_CONTAINER_NAME: container name of instantiating the container
+
+-----
+NGINX_CONFIG_ENV=##
+NGINX_HOST_PORT=##
+NGINX_LISTEN_PORT=##
+NGINX_PHP_SERVICE=##
+NGINX_PHP_SERVICE_PORT=##
+WEB_DATA=##
+
+-----
+
+SSL_KEY: name of ssl key file
+SSL_KEY_PATH: path to folder inside container where ssl key will be put
+SSL_CERT: name of ssl cert file
+SSL_CERT_PATH: path to folder inside container where ssl cert will be put
+
+Image naming
+DB_IMAGE_NAME: name of db container image repo:tag
+WP_IMAGE_NAME: name of wp container image repo:tag
+NGINX_IMAGE_NAME: name of nginx container image repo:tag
