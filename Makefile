@@ -6,7 +6,7 @@
 #    By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/23 09:42:26 by dbarba-v          #+#    #+#              #
-#    Updated: 2026/02/23 10:30:37 by dbarba-v         ###   ########.fr        #
+#    Updated: 2026/02/23 18:58:32 by dbarba-v         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -32,7 +32,9 @@ CONFIG = $(COMPOSE) -f $(DOCKERFILE) config
 CLEAN = $(COMPOSE) -f $(DOCKERFILE) down --volumes
 FCLEAN = $(COMPOSE) -f $(DOCKERFILE) down --volumes --rmi all
 
-.PHONY: all up down stop restart ps shell build config clean fclean re help
+.PHONY: inception all up down stop restart ps shell build config clean fclean re help
+
+inception: all
 
 all: up
 
