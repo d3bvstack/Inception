@@ -26,7 +26,7 @@ services:
     image: nginx
     container_name: nginx
     ports:
-      - "443:443"
+      - "8080:80"
     networks:
       frontend_net:
         ipv4_address: 172.28.0.19

@@ -15,7 +15,7 @@ networks:
   frontend_net:
     name: frontend_net
     driver: bridge
-    internal: true
+    internal: false
     ipam:
       config:
         - subnet: 172.28.0.16/28 # 16-32
