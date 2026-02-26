@@ -12,8 +12,8 @@
 # ENVIRONMENT VARIABLES:
 #   - ROOT_DOMAIN:   Main domain (e.g., login.42.fr).
 #   - NGINX_IP:      Container's IPv4 address or hostname.
-#   - PHP_FPM_IP:    Hostname of the backend service (e.g., 'wordpress').
-#   - PHP_FPM_PORT:  Listening port of PHP-FPM (standard: 9000).
+#   - PHPFPM_HOST:    Hostname of the backend service (e.g., 'wordpress').
+#   - PHPFPM_LISTEN_PORT:  Listening port of PHP-FPM (standard: 9000).
 #   - CERT_PATH: Path to the public certificate (.crt).
 #   - KEY_PATH:  Path to the private key (.key).
 # ==============================================================================
@@ -97,7 +97,7 @@ server {
         # Connect to the PHP container via TCP.
         # fastcgi_index -> request to "any/" will create an internal redirect to
         # /index.php, the location will match and fastcgi will be called
-        fastcgi_pass                ${WP_CONTAINER_NAME}:${PHPFPM_LISTEN_PORT};
+        fastcgi_pass                ${PHPFPM_HOST}:${PHPFPM_LISTEN_PORT};
         fastcgi_index               index.php;
 
         # PATH RESOLUTION:
@@ -158,6 +158,6 @@ server {
 # ==============================================================================
 # 1. Configuration Syntax:  nginx -t
 # 2. Variable Injection:    envsubst < template.conf > default.conf
-# 3. Connection Test:      nc -zv ${PHP_FPM_IP} ${PHP_FPM_PORT}
+# 3. Connection Test:      nc -zv ${PHPFPM_HOST} ${PHPFPM_LISTEN_PORT}
 # 4. Logs:                 tail -f /var/log/nginx/error.log
 # ==============================================================================
