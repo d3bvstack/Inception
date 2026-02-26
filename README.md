@@ -137,7 +137,7 @@ The `Makefile` covers everything. Run `make help` to see the full list, but the 
 - [NGINX Directory Structure (Debian)](https://wiki.debian.org/Nginx/DirectoryStructure) — Layout of `/etc/nginx/`: `nginx.conf`, `conf.d/`, `sites-available/`, `sites-enabled/`, `snippets/`, and param files.
 - [NGINX core module directives](https://nginx.org/en/docs/ngx_core_module.html) — Reference for core directives: `worker_processes`, `error_log`, `pid`, `events`, `user`, `include`, `load_module`.
 - [Installing NGINX Open Source](https://docs.nginx.com/nginx/admin-guide/installing-nginx/installing-nginx-open-source/) — Installation from OS packages, the official nginx repo, or from source.
-- [Configuring HTTPS servers](https://nginx.org/en/docs/http/configuring_https_servers.html) — `listen 443 ssl`, `ssl_certificate`, `ssl_certificate_key`, TLS protocol versions, SNI, and session cache.
+- [Configuring HTTPS servers](https://nginx.org/en/docs/http/configuring_https_servers.html) — `listen 443 ssl`, `certificate`, `certificate_key`, TLS protocol versions, SNI, and session cache.
 
 ### MariaDB
 
@@ -154,4 +154,3 @@ The `Makefile` covers everything. Run `make help` to see the full list, but the 
 - Restructuring and styling documentation.
 - Fetching and summarising all linked resources to write accurate inline descriptions.
 - [Dockerdocs AI Assistant](https://www.docker.com/blog/docker-documentation-ai-powered-assistant/) for docker related queries.
-

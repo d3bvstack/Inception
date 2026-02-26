@@ -137,10 +137,10 @@ Connects PHP-FPM ↔ MariaDB.
 
 | Variable | Description |
 |---|---|
-| `SSL_KEY` | SSL private key filename |
-| `SSL_KEY_PATH` | Directory inside the container for the key (`/etc/ssl/private`) |
-| `SSL_CERT` | SSL certificate filename |
-| `SSL_CERT_PATH` | Directory inside the container for the certificate (`/etc/ssl/cert`) |
+| `KEY_NAME` | SSL private key filename |
+| `KEY_PATH` | Directory inside the container for the key (`/etc/ssl/private`) |
+| `CERT_NAME` | SSL certificate filename |
+| `CERT_PATH` | Directory inside the container for the certificate (`/etc/ssl/cert`) |
 
 ### 1.5 Derived Image Names
 
