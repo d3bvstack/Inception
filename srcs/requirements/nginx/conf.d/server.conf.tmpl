@@ -97,7 +97,7 @@ server {
         # Connect to the PHP container via TCP.
         # fastcgi_index -> request to "any/" will create an internal redirect to
         # /index.php, the location will match and fastcgi will be called
-        fastcgi_pass                ${PHPFPM_HOST}:${PHPFPM_LISTEN_PORT};
+        # fastcgi_pass                ${PHPFPM_HOST}:${PHPFPM_LISTEN_PORT};
         fastcgi_index               index.php;
 
         # PATH RESOLUTION:

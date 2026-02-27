@@ -1,0 +1,45 @@
+
+#/etc/mysql/my.cnf
+
+# Server configuration
+[mysqld]
+user                    = mysql # User that owns the database process
+pid-file                = /run/mysqld/mysqld.pid # File wher it is saved the ID of the process
+basedir                 = /usr
+datadir                 = /var/lib/mysql/ # Default /var/lib/mysql/ # This should be the volume
+tmpdir                  = /tmp/ # Default
+plugin_dir              = /usr/lib/mysql/plugin/ # Default
+character-set-server    = ${MDB_CHARSET}
+collation-server        = ${MDB_COLLATION}
+log-error               = /var/log/mariadb/mariadb.log #Default dir
+
+# -- Network --
+bind-address            = 127.0.0.1  # Listens to all interfaces ¿¿MIGHT REQUIRE FIREWALL??
+port                    = ${MDB_ENGINE_PORT}
+max_connections         = 1024
+skip-name-resolve       = 0 # Wheteher it forces only IP addresses are used for connections
+
+# -- InnoDB -- (Storage engine for MySQl and MariaDB)
+# innodb_buffer_pool_size: Amount of memory InnoDB uses to cache data and indexes.
+innodb_buffer_pool_size = 64M
+
+# innodb_log_file_size: Size of each InnoDB redo log file.
+innodb_log_file_size    = 128M
+
+# innodb_file_per_table: When enabled (1), InnoDB stores each table's data and
+#   indexes in its own .ibd file instead of the shared tablespace. This allows
+#   reclaiming disk space when tables are dropped and can improve I/O locality.
+innodb_file_per_table   = 1  # Creates a separate .ibd for each table instead of a shared tablespace
+
+# Set InnoDB as default database storage engine (server option)
+default-storage-engine = InnoDB
+
+# Settings for all clients that connect locally
+[client]
+
+# Specific setting for the mysql cli tool
+[mysql]
+[mysql]
+
+# Specific setting for the MariaDB, ignored by MySQL
+[mariadb]
