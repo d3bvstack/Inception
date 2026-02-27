@@ -1,13 +1,20 @@
 include:
   - networks/docker-compose.yml
+  - secrets/docker-compose.yml
 
 services:
   mariadb:
-    image: mariadb:10.5
+    build:
+      context: ./requirements/mariadb
+      dockerfile: Dockerfile
+    image: mariadb:inception
     container_name: mariadb
+    env_file:
+      - ./requirements/mariadb/config.env
+    secrets:
+      - mysql_root_password
+      - mysql_wp_db_admin_password
     restart: always
-    environment:
-      - MARIADB_ROOT_PASSWORD=root
     networks:
       backend_net:
         ipv4_address: 172.28.0.2
