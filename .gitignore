@@ -3,6 +3,8 @@
 secrets/
 # Project secrets directory inside srcs/
 srcs/secrets/
+# Keep the docker-compose in srcs/secrets tracked
+!srcs/secrets/docker-compose.yml
 # Any other secrets directory anywhere in the tree
 **/secrets/
 
