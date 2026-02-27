@@ -1,0 +1,10 @@
+# Ignore secrets directories and sensitive files
+# Top-level secrets folder
+secrets/
+# Project secrets directory inside srcs/
+srcs/secrets/
+# Any other secrets directory anywhere in the tree
+**/secrets/
+
+*.pem
+*.key
