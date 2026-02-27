@@ -23,10 +23,19 @@ services:
     restart: always
 
   nginx:
-    image: nginx
+    build:
+      context: ./requirements/nginx
+      dockerfile: Dockerfile
+      args:
+        KEY_NAME: ${KEY_NAME}
+        CERT_NAME: ${CERT_NAME}
+    image: nginx:inception
     container_name: nginx
+    env_file:
+      - ./requirements/nginx/config.env
     ports:
       - "8080:80"
+      - "4343:443"
     networks:
       frontend_net:
         ipv4_address: 172.28.0.19
