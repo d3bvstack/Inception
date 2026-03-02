@@ -29,8 +29,11 @@ COPY --link ./tools/setup.sh /usr/local/bin/setup.sh
 COPY --link ./nginx.conf /etc/nginx/nginx.conf
 COPY --link ./conf.d/server.conf.tmpl /etc/nginx/conf.d/server.conf.tmpl
 
-COPY --link ./tools/index.html var/www/dbarba-v.42.fr/public/index.html
+# COPY --link ./tools/index.html var/www/dbarba-v.42.fr/public/index.html
 
 RUN chmod +x /usr/local/bin/setup.sh
 
 ENTRYPOINT ["/bin/bash", "/usr/local/bin/setup.sh"]
+
+EXPOSE 9000
+EXPOSE 443

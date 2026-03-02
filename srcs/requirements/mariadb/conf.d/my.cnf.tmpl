@@ -14,7 +14,7 @@ collation-server        = ${MDB_COLLATION}
 log-error               = /var/log/mariadb/mariadb.log #Default dir
 
 # -- Network --
-bind-address            = 127.0.0.1  # Listens to all interfaces ¿¿MIGHT REQUIRE FIREWALL??
+bind-address            = 0.0.0.0 # Listens to all interfaces ¿¿MIGHT REQUIRE FIREWALL??
 port                    = ${MDB_ENGINE_PORT}
 max_connections         = 1024
 skip-name-resolve       = 0 # Wheteher it forces only IP addresses are used for connections

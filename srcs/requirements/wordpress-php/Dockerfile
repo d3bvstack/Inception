@@ -6,7 +6,7 @@ ARG PHP_FPM_VERSION
 LABEL org.opencontainers.image.authors=dbarba-v@student.42madrid.com
 
 RUN apt-get update \
-	&& apt-get install -y --no-install-recommends \
+    && apt-get install -y --no-install-recommends \
 		ca-certificates \
 		curl \
 		gnupg \
@@ -23,6 +23,7 @@ RUN apt-get update \
 		ghostscript \
 		imagemagick \
 		openssl \
+		gettext-base \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /var/www \
@@ -36,4 +37,4 @@ RUN chmod +x /usr/local/bin/setup.sh
 
 ENTRYPOINT ["/bin/bash", "/usr/local/bin/setup.sh"]
 
-EXPOSE 3306
+EXPOSE 9000

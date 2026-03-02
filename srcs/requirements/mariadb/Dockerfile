@@ -11,10 +11,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN mkdir -p /run/mysqld /var/lib/mysql \
 	&& chown -R mysql:mysql /run/mysqld /var/lib/mysql /etc/mysql/mariadb.conf.d/ /var/log/
 
-COPY ./conf.d/my.cnf.tmpl /tmp/my.cnf.tmpl
-COPY ./tools/setup.sh     /usr/local/bin/setup.sh
+COPY --link ./conf.d/my.cnf.tmpl /tmp/my.cnf.tmpl
+COPY --link ./tools/setup.sh     /usr/local/bin/setup.sh
+COPY --link ./tools/healthcheck.sh     /usr/local/bin/healthcheck.sh
 
 RUN chmod +x /usr/local/bin/setup.sh
+RUN chmod +x /usr/local/bin/healthcheck.sh
 
 ENTRYPOINT ["/bin/bash", "/usr/local/bin/setup.sh"]
 

@@ -82,6 +82,8 @@ echo "Shutting down temporary instance..."
 mysqladmin -u root -p"${MYSQL_ROOT_PASSWORD}" shutdown
 wait $pid
 
-# Start  definitive MariaDB instance
 echo "Starting main MariaDB instane..."
-exec /usr/sbin/mariadbd --user=mysql --datadir=/var/lib/mysql
+# Start definitive MariaDB instance
+echo "Starting main MariaDB instane..."
+# Ensure mariadbd listens on all interfaces so other containers can connect.
+exec /usr/sbin/mariadbd --user=mysql --datadir=/var/lib/mysql --bind-address=0.0.0.0
