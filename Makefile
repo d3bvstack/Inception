@@ -6,7 +6,7 @@
 #    By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/23 09:42:26 by dbarba-v          #+#    #+#              #
-#    Updated: 2026/02/23 18:58:32 by dbarba-v         ###   ########.fr        #
+#    Updated: 2026/03/03 15:38:04 by dbarba-v         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -39,6 +39,7 @@ inception: all
 all: up
 
 up:
+	@sh srcs/tools/check-secrets.sh
 	$(UP)
 
 down:

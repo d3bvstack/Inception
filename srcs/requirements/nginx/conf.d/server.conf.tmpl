@@ -31,13 +31,6 @@ server {
 
     # Enforce HTTPS globally. $host preserves the requested domain name.
     return 301 https://$host:${NGINX_HOST_PORT}$request_uri;
-
-    # Block access to sensitive hidden files (.git, .env) immediately.
-    location ~ /\. {
-        deny all;
-        access_log off;
-        log_not_found off;
-    }
 }
 
 # ------------------------------------------------------------------------------
@@ -51,7 +44,7 @@ server {
     ssl_certificate     ${CERT_PATH}/${CERT_NAME};
     ssl_certificate_key ${KEY_PATH}/${KEY_NAME};
 
-    server_name 127.0.0.1 0.0.0.0 ${DOMAIN_NAME} www.${DOMAIN_NAME}; # Maybe need IP of NGINX container
+    server_name ${DOMAIN_NAME} www.${DOMAIN_NAME};
 
     # DATA HIERARCHY
     # --------------------------------------------------------------------------

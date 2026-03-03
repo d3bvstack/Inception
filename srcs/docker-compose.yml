@@ -55,7 +55,6 @@ services:
       - wordpress_data:/var/www
     restart: always
 
-
   nginx:
     build:
       context: ./requirements/nginx
@@ -68,11 +67,12 @@ services:
     env_file:
       - ./requirements/nginx/config.env
     ports:
-      - "8080:80"
-      - "4343:443"
+      - "443:443"
     networks:
       frontend_net:
         ipv4_address: 172.28.0.19
+    depends_on:
+      - wordpress-php
     volumes:
       - wordpress_data:/var/www
     restart: always

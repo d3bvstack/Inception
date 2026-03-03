@@ -1,18 +1,7 @@
 # Secrets and sensitive files
-# Ignore any directory named `secrets` anywhere
-**/secrets/
-
-# Ignore dot-hidden `.secrets` files or directories anywhere
+**/*.secret
 **/.secrets
 
-# Ignore any files with the `.secret` extension inside `secrets` directories
-**/secrets/*.secret
-**/secrets/**/*.secret
-
-# Exceptions: allow tracking the project secrets folder and its docker compose file
-!srcs/secrets/
-!srcs/secrets/docker_compose.yml
-
 # Sensitive keys
-*.pem
-*.key
+**/*.pem
+**/*.key

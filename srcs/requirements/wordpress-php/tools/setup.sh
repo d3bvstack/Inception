@@ -49,56 +49,45 @@ main() {
 
 	mkdir -p "$WWW_ROOT"
 
-	echo "Downloading WordPress ($WP_VERSION)"
-	if [ "$WP_VERSION" = "latest" ]; then
-		wp core download --path=${WWW_ROOT} --skip-content --force --allow-root
+	# Download core files only if not already present
+	if [ ! -f "${WWW_ROOT}/wp-load.php" ]; then
+		echo "Downloading WordPress ($WP_VERSION)"
+		if [ "$WP_VERSION" = "latest" ]; then
+			wp core download --path=${WWW_ROOT} --skip-content --allow-root
+		else
+			wp core download --path=${WWW_ROOT} --version="$WP_VERSION" --skip-content --allow-root
+		fi
 	else
-		wp core download --path=${WWW_ROOT} --version="$WP_VERSION" --skip-content --force --allow-root
+		echo "WordPress core files already present at ${WWW_ROOT}, skipping download"
 	fi
 
-	wait_for_db() {
-		echo "Waiting for database ${DB_HOST}:${DB_PORT} to be available..."
-		local attempt=0
-		# Try to open a TCP connection to the database port; works in bash
-		while ! bash -c "</dev/tcp/${DB_HOST}/${DB_PORT}" >/dev/null 2>&1; do
-			attempt=$((attempt + 1))
-			if [ "$attempt" -ge 30 ]; then
-				echo "Timed out waiting for database ${DB_HOST}:${DB_PORT}"
-				return 1
-			fi
-			sleep 1
-		done
-		echo "Database ${DB_HOST}:${DB_PORT} is reachable"
-		return 0
-	}
+	# Configure and install only if wp-config.php is missing
+	if [ ! -f "${WWW_ROOT}/wp-config.php" ]; then
+		echo "Generating wp-config.php"
+		wp --path=${WWW_ROOT} config create --dbname="${DB_NAME}" --dbuser="${DB_ADMIN}" --dbhost="${DB_HOST}:${DB_PORT}" --dbpass="$DB_PASS" --allow-root
 
-	if ! wait_for_db; then
-		echo "Database unreachable, aborting WordPress install"
-		exit 1
+		echo "Installing WordPress"
+		wp --path=${WWW_ROOT} core install --url="${ROOT_DOMAIN}" --title="${SITE_TITLE}" --admin_user="${WP_ADMIN}" --admin_password="$ADMIN_PASS" --admin_email="${WP_ADMIN_MAIL}" --allow-root
+
+		echo "Updating plugins"
+		wp --path=${WWW_ROOT} plugin update --all --allow-root || true
+
+		echo "Creating editor user"
+		wp --path=${WWW_ROOT} user create "${WP_USER}" "${WP_USER_MAIL}" --role="${WP_USER_ROLE}" --user_pass="$WP_USER_PASS" --porcelain --allow-root || true
+
+		echo "Installing and activating default theme"
+		wp --path=${WWW_ROOT} theme install twentytwentythree --activate --allow-root || true
+
+		ID=$(wp --path=/var/www/${DOMAIN_NAME} post create --post_type=page --post_title="Welcome to Inception" --post_content="Welcome to dbarba-v inception." --post_status=publish --porcelain --allow-root)
+		wp --path=/var/www/${DOMAIN_NAME} option update page_on_front $ID --allow-root \
+		&& wp --path=/var/www/${DOMAIN_NAME} option update show_on_front page --allow-root
+
+		echo "WordPress initial setup complete"
+	else
+		echo "wp-config.php already present, skipping configuration and install"
 	fi
 
-	echo "Generating wp-config.php"
-	# Use secrets read at the top of the script; fall back if missing
-	wp --path=${WWW_ROOT} config create --dbname="${DB_NAME}" --dbuser="${DB_ADMIN}" --dbhost="${DB_HOST}:${DB_PORT}" --dbpass="$DB_PASS" --allow-root || true
-
-	echo "Installing WordPress"
-	wp --path=${WWW_ROOT} core install --url="${ROOT_DOMAIN}" --title="${SITE_TITLE}" --admin_user="${WP_ADMIN}" --admin_password="$ADMIN_PASS" --admin_email="${WP_ADMIN_MAIL}" --allow-root || true
-
-	echo "Updating plugins"
-	wp --path=${WWW_ROOT} plugin update --all --allow-root || true
-
-	echo "Creating editor user"
-	# wp user create may fail if user exists; allow failure
-	wp --path=${WWW_ROOT} user create "${WP_USER}" "${WP_USER_MAIL}" --role="${WP_USER_ROLE}" --user_pass="$WP_USER_PASS" --porcelain --allow-root || true
-
-	# Ensure a theme is installed and active (skip-content leaves no default themes)
-	echo "Installing and activating default theme"
-	wp --path=${WWW_ROOT} theme install twentytwentythree --activate --allow-root || true
-
-	ID=$(wp --path=/var/www/${DOMAIN_NAME} post create --post_type=page --post_title="Welcome to Inception" --post_content="Welcome to dbarba-v inception." --post_status=publish --porcelain --allow-root)
-	wp --path=/var/www/${DOMAIN_NAME} option update page_on_front $ID --allow-root \
-	&& wp --path=/var/www/${DOMAIN_NAME} option update show_on_front page --allow-root
-
+	# Ensure correct permission
 	chown -R "$WWW_USER":"$WWW_GROUP" "$WWW_ROOT"
 	find "$WWW_ROOT" -type d -exec chmod 755 {} +
 	find "$WWW_ROOT" -type f -exec chmod 644 {} +
@@ -106,7 +95,7 @@ main() {
 	echo "WordPress setup complete"
 }
 
-# Run setup then start php-fpm in the foreground so the container stays alive.
+# Run php-fpm in the foreground
 main "$@"
 
 if command -v "php-fpm${PHP_FPM_VERSION}" >/dev/null 2>&1; then

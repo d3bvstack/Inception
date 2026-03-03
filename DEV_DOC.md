@@ -159,13 +159,13 @@ These variables are composed from the repo and tag variables above and do not ne
 Secret values are read from files and are **not** stored in `.env`. Create the following files before the first build:
 
 ```
-secrets/
-├── database/
-│   ├── root_password       # MDB_ROOT_PASSWORD
-│   └── dbuser_password     # WP_DB_ADMIN_PASSWORD
-└── wordpress/
-    ├── admin_password      # WordPress admin account
-    └── editor_password     # WordPress editor account
+srcs/secrets/
+├── mariadb/
+│   ├── mysql_root_password.secret         # mysql_root_password secret
+│   └── mysql_wp_db_admin_password.secret  # mysql_wp_db_admin_password secret
+└── wordpress-php/
+    ├── wp_admin_password.secret            # wp_admin_password secret
+    └── wp_user_password.secret             # wp_user_password secret
 ```
 
 ---
@@ -175,10 +175,9 @@ secrets/
 | Service | File |
 |---|---|
 | NGINX | `srcs/requirements/nginx/nginx.conf` |
-| NGINX (vhost) | `srcs/requirements/nginx/conf.d/template.conf` |
+| NGINX (vhost) | `srcs/requirements/nginx/conf.d/server.conf.tmpl` |
 | PHP-FPM | `srcs/requirements/wordpress-php/php-fpm.conf` |
-| MariaDB | `srcs/requirements/mariadb/conf.d/default.conf` |
-| MariaDB (template) | `srcs/requirements/mariadb/conf.d/template.conf` |
+| MariaDB | `srcs/requirements/mariadb/conf.d/my.cnf.tmpl` |
 
 ---
 

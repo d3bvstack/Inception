@@ -2,9 +2,9 @@
 set -euo pipefail
 
 # Paths
-TEMPLATE=/tmp/my.cnf.tmpl
-TARGET_DIR=/etc
-TARGET_CONF="$TARGET_DIR/my.cnf"
+TEMPLATE=/etc/mysql/mariadb.conf.d/99-custom.cnf.tmpl
+TARGET_DIR=/etc/mysql/mariadb.conf.d
+TARGET_CONF="$TARGET_DIR/99-custom.cnf"
 
 # Source secrets
 MYSQL_ROOT_PASSWORD=$(cat /run/secrets/mysql_root_password)
@@ -14,11 +14,14 @@ WP_DB_ADMIN_PASSWORD=$(cat /run/secrets/mysql_wp_db_admin_password)
 if [ -f "$TEMPLATE" ]; then
     echo "Config template \"$TEMPLATE\" found"
     echo "Generating config file \"$TARGET_CONF\""
-    # Only substitute these environment variables. Adjust list if you add more.
     envsubst '\${MDB_CHARSET} \${MDB_COLLATION} \${MDB_ENGINE_PORT}' < "$TEMPLATE" > "$TARGET_CONF"
+    rm -f "$TEMPLATE"
 else
-    echo "No template found at $TEMPLATE, exiting"
-	exit 1
+    if [ -f "$TARGET_CONF" ]; then
+        echo "No template found at $TEMPLATE, using existing $TARGET_CONF"
+    else
+        echo "No template found at $TEMPLATE and $TARGET_CONF does not exist — continuing without custom config"
+    fi
 fi
 
 # Check if directory exists, which means database not initialized yet
@@ -32,6 +35,10 @@ if [ ! -d "/var/lib/mysql/mysql" ]; then
     fi
 fi
 
+# Ensure MariaDB log directory exists so mariadbd can create mariadb.log
+mkdir -p /var/log/mariadb
+chown -R mysql:mysql /var/log/mariadb
+
 # Start server with mysql server and no networking on background and save process id
 /usr/sbin/mariadbd \
     --user=mysql \
@@ -39,8 +46,8 @@ fi
     --skip-networking > /var/log/mariadb_startup.log 2>&1 &
 pid=$!
 
-# Tries mysql ping command for 30 seconds, if successful, break and contiue, else exit
-i=30
+# Tries mysql ping command for 60 seconds, if successful, break and contiue, else exit
+i=60
 while [ "$i" -gt 0 ]; do
     if mysqladmin ping >/dev/null 2>&1; then
 		echo "MariaDB started"
@@ -51,6 +58,11 @@ while [ "$i" -gt 0 ]; do
 done
 if [ "$i" -eq 0 ]; then
     echo "MariaDB not reachable"
+    echo "Stopping temporary server (if running)..."
+    if [ -n "${pid:-}" ]; then
+        kill "$pid" 2>/dev/null || true
+        wait "$pid" 2>/dev/null || true
+    fi
     exit 1
 fi
 
@@ -82,8 +94,6 @@ echo "Shutting down temporary instance..."
 mysqladmin -u root -p"${MYSQL_ROOT_PASSWORD}" shutdown
 wait $pid
 
-echo "Starting main MariaDB instane..."
 # Start definitive MariaDB instance
 echo "Starting main MariaDB instane..."
-# Ensure mariadbd listens on all interfaces so other containers can connect.
-exec /usr/sbin/mariadbd --user=mysql --datadir=/var/lib/mysql --bind-address=0.0.0.0
+exec /usr/sbin/mariadbd --user=mysql --datadir=/var/lib/mysql
