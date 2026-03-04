@@ -27,13 +27,16 @@ fi
 # Check if directory exists, which means database not initialized yet
 if [ ! -d "/var/lib/mysql/mysql" ]; then
     if command -v mariadb-install-db >/dev/null 2>&1; then
-        echo "Initializing MariaDB"
+        echo "Initializing MariaDB data directory..."
         mariadb-install-db --user=mysql --datadir=/var/lib/mysql > /dev/null
     else
         echo "No database initialization command found." >&2
         exit 1
     fi
+else
+    echo "MariaDB data directory already exists, skipping mariadb-install-db"
 fi
+
 
 # Ensure MariaDB log directory exists so mariadbd can create mariadb.log
 mkdir -p /var/log/mariadb
@@ -66,13 +69,13 @@ if [ "$i" -eq 0 ]; then
     exit 1
 fi
 
-# Same as mysql_secure_installation but non-interactive
-# Give/change root password
-# Disallow remote root login
-# Remove anonymous user
-# Delete test database
-# Reload privilige tables
-mysql -u root <<EOF
+# Secure MariaDB: set root password, remove anonymous users and test DB.
+# On first boot root has no password; on restarts we use the stored password.
+# Always authenticate with the root password (ALTER USER is idempotent).
+echo "Securing MariaDB..."
+if mysql -u root -e "SELECT 1;" >/dev/null 2>&1; then
+    # First boot: root has no password yet
+    mysql -u root <<EOF
 ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
 DROP USER IF EXISTS ''@'localhost';
 DROP USER IF EXISTS ''@'$(hostname)';
@@ -80,12 +83,13 @@ DROP DATABASE IF EXISTS test;
 DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
 FLUSH PRIVILEGES;
 EOF
+fi
 
 # Create database and admin user of that databse
 mysql -u root -p"${MYSQL_ROOT_PASSWORD}" <<EOF
 CREATE DATABASE IF NOT EXISTS \`${WP_DB_NAME}\` CHARACTER SET ${WP_DB_CHARSET} COLLATE ${WP_DB_COLLATION};
-CREATE USER IF NOT EXISTS '${MDB_ADMIN}'@'%' IDENTIFIED BY '${WP_DB_ADMIN_PASSWORD}';
-GRANT ALL PRIVILEGES ON \`${WP_DB_NAME}\`.* TO '${MDB_ADMIN}'@'%';
+CREATE USER IF NOT EXISTS '${WP_DB_ADMIN}'@'%' IDENTIFIED BY '${WP_DB_ADMIN_PASSWORD}';
+GRANT ALL PRIVILEGES ON \`${WP_DB_NAME}\`.* TO '${WP_DB_ADMIN}'@'%';
 FLUSH PRIVILEGES;
 EOF
 

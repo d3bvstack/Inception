@@ -6,7 +6,7 @@
 #    By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/23 09:42:26 by dbarba-v          #+#    #+#              #
-#    Updated: 2026/03/03 15:38:04 by dbarba-v         ###   ########.fr        #
+#    Updated: 2026/03/04 15:26:56 by dbarba-v         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -40,6 +40,8 @@ all: up
 
 up:
 	@sh srcs/tools/check-secrets.sh
+	@mkdir -p "/home/$$USER/data/mariadb" && \
+	 mkdir -p "/home/$$USER/data/wordpress"
 	$(UP)
 
 down:
@@ -73,6 +75,12 @@ clean:
 	$(CLEAN)
 
 fclean:
+	@docker run --rm \
+	  -v "/home/$$USER/data/wordpress:/mnt/wp" \
+	  -v "/home/$$USER/data/mariadb:/mnt/db" \
+	  debian:12 sh -c "rm -rf /mnt/wp/* /mnt/db/*"
+	@rm -rf "/home/$$USER/data/wordpress"
+	@rm -rf "/home/$$USER/data/mariadb"
 	$(FCLEAN)
 
 re: fclean all

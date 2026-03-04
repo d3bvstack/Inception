@@ -12,7 +12,7 @@ for file in $SECRETS; do
   [ -z "$file" ] && continue
   [ -f "$file" ] && continue
 
-  [ -r /dev/tty ] || { printf "Error: missing %s and no TTY to prompt for value.\n" "$file" >&2; exit 1; }
+  { [ -r /dev/tty ] && [ -w /dev/tty ]; } || { printf "Error: missing %s and no TTY to prompt for value.\n" "$file" >&2; exit 1; }
 
   mkdir -p "$(dirname "$file")"
   printf "Enter value for %s: " "$file" >/dev/tty

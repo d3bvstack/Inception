@@ -1,9 +1,7 @@
-volumes:
-  wordpress_data:
-
 include:
   - ./networks/docker-compose.yml
-  - ./secrets/docker_compose.yml
+  - ./secrets/docker-compose.yml
+  - ./volumes/docker-compose.yml
 
 services:
   mariadb:
@@ -26,7 +24,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 10s
+      start_period: 5s
+    volumes:
+      - ${VOLUME_DB_NAME}:${VOLUME_DB_MOUNTPOINT}
 
   wordpress-php:
     build:
@@ -52,7 +52,7 @@ services:
       mariadb:
         condition: service_healthy
     volumes:
-      - wordpress_data:/var/www
+      - ${VOLUME_WP_NAME}:${VOLUME_WP_MOUNTPOINT}
     restart: always
 
   nginx:
@@ -74,5 +74,5 @@ services:
     depends_on:
       - wordpress-php
     volumes:
-      - wordpress_data:/var/www
+      - ${VOLUME_WP_NAME}:${VOLUME_WP_MOUNTPOINT}
     restart: always
