@@ -18,20 +18,21 @@
 	- [WordPress](#wordpress)
 	- [AI usage](#ai-usage)
 
-
 ## Project Description
 
-The goal of this project is to get hands-on with containerization and orchestration by deploying a small but realistic web infrastructure using Docker Compose. Instead of installing NGINX, PHP, and MariaDB directly on a machine, each service lives in its own container built from a custom Dockerfile. The final result is a WordPress site served over HTTPS, with NGINX as the only public entry point, PHP-FPM processing the application logic, and MariaDB storing all the data.
+The goal of this project is to get hands-on experience with containerization and orchestration by deploying a small but realistic web infrastructure using Docker Compose. Instead of installing NGINX, PHP, and MariaDB directly on a machine, each service lives in its own container built from a custom Dockerfile. The final result is a WordPress site served over HTTPS, with NGINX as the only public entry point, PHP-FPM processing WordPress application logic, and MariaDB for the managing of the WordPress MySQL database.
 
 The three services, their roles, and how they connect:
 
 | Service | Role | Port(s) | Volume |
 |---|---|---|---|
-| NGINX | Reverse proxy, TLS 1.2/1.3 | 443 | — |
-| WordPress + PHP-FPM | CMS / PHP runtime | 9000 (PHP-FPM) | website files at `/var/www` |
-| MariaDB | Relational database | 3306 | database files at `/var/lib/mysql` |
+| NGINX | Reverse proxy, endpoint for HTTPS traffic, serving static files and forwarding PHP to PHP-FPM | 443 | `wordpress_data`:`/var/www/dbarba-v` |
+| WordPress + PHP-FPM | CMS, PHP runtime | 9000 (PHP-FPM) 3306 (MariaDB) | `wordpress_data`:`/var/www/dbarba-v` |
+| MariaDB | Relational database management | 3306 | database files at `/var/lib/mysql` |
 
-Everything is wired together in a single `docker-compose.yml`. Two user-defined networks enforce a clean separation: the `frontend` network connects NGINX to WordPress, and the `backend` network connects WordPress to MariaDB. NGINX has no route to the database, and the database is never exposed to the outside world.
+Everything is wired together in a single `docker-compose.yml`. Two user-defined networks enforce a clean separation: the `frontend` network connects NGINX to WordPress/PHP-FPM, and the `backend` network connects WordPress/PHP-FPM to MariaDB. NGINX has no route to the database, and the database is never exposed to the outside world.
+
+![Inception Diagram Overview](.doc/InceptionOverview-d3bvstack.svg)
 
 ### Virtual Machines vs Docker
 
@@ -40,6 +41,8 @@ You could run this same NGINX, PHP, MariaDB stack inside a VM, and it would work
 Docker containers share the host kernel; Docker uses Linux primitives like namespaces for isolation (what the process can see), cgroups for resource limits, and a union filesystem for layered images to give each container its own isolated environment without duplicating the OS. The result of this approach is that containers start in seconds, use less memory, and the images stay small because they only carry the application and its immediate dependencies.
 
 For a project like this, where the goal is rapid iteration and reproducible environments, containers are the obvious fit. You can destroy the whole stack with one command and rebuild it from scratch in under a minute. Doing the same with VMs would be more time consumming and resource intensive.
+
+![General difference between VMs and Containers](.doc/vmVScontainer-d3bvstack.svg)
 
 ### Docker Networks vs Host Network
 
