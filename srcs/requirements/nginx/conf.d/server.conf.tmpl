@@ -31,13 +31,6 @@ server {
 
     # Enforce HTTPS globally. $host preserves the requested domain name.
     return 301 https://$host:${NGINX_HOST_PORT}$request_uri;
-
-    # Block access to sensitive hidden files (.git, .env) immediately.
-    location ~ /\. {
-        deny all;
-        access_log off;
-        log_not_found off;
-    }
 }
 
 # ------------------------------------------------------------------------------
@@ -48,15 +41,15 @@ server {
     listen [::]:${NGINX_LISTEN_PORT} ssl reuseport;
 
     # SSL Certificates (Injected via Environment)
-    ssl_certificate     ${CERT_PATH}/${CERT_NAME};
-    ssl_certificate_key ${KEY_PATH}/${KEY_NAME};
+    ssl_certificate     ${CERT_PATH}/ssl_cert;
+    ssl_certificate_key ${KEY_PATH}/ssl_key;
 
-    server_name 127.0.0.1 0.0.0.0 ${DOMAIN_NAME} www.${DOMAIN_NAME}; # Maybe need IP of NGINX container
+    server_name ${DOMAIN_NAME} www.${DOMAIN_NAME};
 
     # DATA HIERARCHY
     # --------------------------------------------------------------------------
     set $base ${WEB_DATA}/${DOMAIN_NAME};
-    root $base/public;
+    root $base;
     index index.php index.html;
 
     # SECURITY HEADERS (OWASP Recommended)
@@ -97,7 +90,7 @@ server {
         # Connect to the PHP container via TCP.
         # fastcgi_index -> request to "any/" will create an internal redirect to
         # /index.php, the location will match and fastcgi will be called
-        # fastcgi_pass                ${PHPFPM_HOST}:${PHPFPM_LISTEN_PORT};
+        fastcgi_pass                ${PHPFPM_HOST}:${PHPFPM_LISTEN_PORT};
         fastcgi_index               index.php;
 
         # PATH RESOLUTION:

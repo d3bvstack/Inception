@@ -1,6 +1,7 @@
 include:
-  - networks/docker-compose.yml
-  - secrets/docker-compose.yml
+  - ./networks/docker-compose.yml
+  - ./secrets/docker-compose.yml
+  - ./volumes/docker-compose.yml
 
 services:
   mariadb:
@@ -18,15 +19,46 @@ services:
     networks:
       backend_net:
         ipv4_address: 172.28.0.2
+    healthcheck:
+      test: ["CMD-SHELL", "/usr/local/bin/healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    volumes:
+      - ${VOLUME_DB_NAME}:${VOLUME_DB_MOUNTPOINT}
 
   wordpress-php:
-    image: wordpress:php8.2-fpm
+    build:
+        context: ./requirements/wordpress-php
+        dockerfile: Dockerfile
+        args:
+          DOMAIN_NAME: ${DOMAIN_NAME}
+          PHP_FPM_VERSION: ${PHP_FPM_VERSION}
+    image: wordpress:inception
     container_name: wordpress-php
+    env_file:
+      - ./requirements/wordpress-php/config.env
+    secrets:
+      - mysql_wp_db_admin_password
+      - wp_admin_password
+      - wp_user_password
     networks:
       frontend_net:
         ipv4_address: 172.28.0.18
       backend_net:
         ipv4_address: 172.28.0.3
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "9000"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    volumes:
+      - ${VOLUME_WP_NAME}:${VOLUME_WP_MOUNTPOINT}
     restart: always
 
   nginx:
@@ -40,10 +72,17 @@ services:
     container_name: nginx
     env_file:
       - ./requirements/nginx/config.env
+    secrets:
+      - ssl_key
+      - ssl_cert
     ports:
-      - "8080:80"
-      - "4343:443"
+      - "443:443"
     networks:
       frontend_net:
         ipv4_address: 172.28.0.19
+    depends_on:
+      wordpress-php:
+        condition: service_healthy
+    volumes:
+      - ${VOLUME_WP_NAME}:${VOLUME_WP_MOUNTPOINT}
     restart: always

@@ -28,7 +28,7 @@ The three services, their roles, and how they connect:
 | Service | Role | Port(s) | Volume |
 |---|---|---|---|
 | NGINX | Reverse proxy, TLS 1.2/1.3 | 443 | — |
-| WordPress + PHP-FPM | CMS / PHP runtime | 9000 (PHP-FPM) | website files at `/var/www/dbarba-v.42.fr` |
+| WordPress + PHP-FPM | CMS / PHP runtime | 9000 (PHP-FPM) | website files at `/var/www` |
 | MariaDB | Relational database | 3306 | database files at `/var/lib/mysql` |
 
 Everything is wired together in a single `docker-compose.yml`. Two user-defined networks enforce a clean separation: the `frontend` network connects NGINX to WordPress, and the `backend` network connects WordPress to MariaDB. NGINX has no route to the database, and the database is never exposed to the outside world.
@@ -61,10 +61,10 @@ This project uses four secrets:
 
 | Secret file | Purpose |
 |---|---|
-| `secrets/database/mysqlroot_password` | MariaDB `root` password |
-| `secrets/database/mysqlmanager_password` | Password for the database manager user (what WordPress actually connects as, not root) |
-| `secrets/wordpress/admin_password` | WordPress admin account password |
-| `secrets/wordpress/editor_password` | WordPress editor account password |
+| `srcs/secrets/mariadb/mysql_root_password.secret` | MariaDB `root` password |
+| `srcs/secrets/mariadb/mysql_wp_db_admin_password.secret` | Password for the WordPress database user (what PHP-FPM connects as, not root) |
+| `srcs/secrets/wordpress-php/wp_admin_password.secret` | WordPress admin account password |
+| `srcs/secrets/wordpress-php/wp_user_password.secret` | WordPress user account password |
 
 ### Docker Volumes vs Bind Mounts
 

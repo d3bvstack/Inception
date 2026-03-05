@@ -6,7 +6,7 @@
 #    By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/23 09:42:26 by dbarba-v          #+#    #+#              #
-#    Updated: 2026/02/23 18:58:32 by dbarba-v         ###   ########.fr        #
+#    Updated: 2026/03/05 15:07:32 by dbarba-v         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -32,13 +32,21 @@ CONFIG = $(COMPOSE) -f $(DOCKERFILE) config
 CLEAN = $(COMPOSE) -f $(DOCKERFILE) down --volumes
 FCLEAN = $(COMPOSE) -f $(DOCKERFILE) down --volumes --rmi all
 
-.PHONY: inception all up down stop restart ps shell build config clean fclean re help
+-include srcs/.env
+export $(shell sed 's/=.*//' srcs/.env)
+
+.PHONY: inception all secrets up down stop restart ps shell build config clean fclean re help
 
 inception: all
 
 all: up
 
-up:
+secrets:
+	@sh srcs/tools/check-secrets.sh
+	@mkdir -p "/home/$$USER/data/mariadb" && \
+	 mkdir -p "/home/$$USER/data/wordpress"
+
+up: secrets
 	$(UP)
 
 down:
@@ -72,6 +80,12 @@ clean:
 	$(CLEAN)
 
 fclean:
+	@docker run --rm \
+	  -v "/home/$$USER/data/wordpress:/mnt/wp" \
+	  -v "/home/$$USER/data/mariadb:/mnt/db" \
+	  debian:12 sh -c "rm -rf /mnt/wp/* /mnt/db/*"
+	@rm -rf "/home/$$USER/data/wordpress"
+	@rm -rf "/home/$$USER/data/mariadb"
 	$(FCLEAN)
 
 re: fclean all

@@ -18,10 +18,12 @@ This infrastructure runs a WordPress site backed by the following services:
 ### Start the infrastructure
 
 ```sh
-make all
+make
 ```
 
-> Aliases: `make up` or `make inception`
+> Aliases: `make inception` `make all` or `make up`
+
+Note: The Makefile runs a small helper that will prompt for any missing secret files (created under `srcs/secrets/`) when starting the stack.
 
 ### Stop, restart, or clean up
 
@@ -45,17 +47,21 @@ make all
 
 ## Credentials
 
-Secrets are stored as plain-text files under `./secrets/`:
+Secrets are stored as plain-text files under `srcs/secrets/`:
 
 ```
-secrets/
-├── database/
-│   ├── dbuser_password
-│   └── root_password
-└── wordpress/
-    ├── admin_password
-    └── editor_password
+srcs/secrets/
+├── mariadb/
+│   ├── mysql_root_password.secret
+│   └── mysql_wp_db_admin_password.secret
+└── wordpress-php/
+    ├── wp_admin_password.secret
+    └── wp_user_password.secret
 ```
+
+Each file must contain only the secret value (no trailing newline).
+
+If a file is missing, `make` prompts interactively for its value and writes it with `0400` permissions. If in non-interactive environments (no TTY) the check will fail; create the files beforehand.
 
 ---
 

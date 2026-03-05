@@ -1,0 +1,15 @@
+volumes:
+
+  database_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${VOLUME_DB_HOST_PATH}
+
+  wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${VOLUME_WP_HOST_PATH}
