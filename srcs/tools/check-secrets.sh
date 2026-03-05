@@ -26,6 +26,7 @@ for file in $CRED_SECRETS; do
 done
 
 if [[ ! -f "srcs/secrets/ssl/${KEY_NAME}" || ! -f "srcs/secrets/ssl/${CERT_NAME}" ]]; then
+  mkdir -p srcs/secrets/ssl
   printf "Generating SSL key and certificate.\n"
   openssl req -x509 \
 		-newkey rsa:4096 \
@@ -34,5 +35,5 @@ if [[ ! -f "srcs/secrets/ssl/${KEY_NAME}" || ! -f "srcs/secrets/ssl/${CERT_NAME}
 		-sha256 \
 		-days 3650 \
 		-nodes \
-		-subj "/C=ES/ST=Madrid/L=Madrid/O=42/OU=Inception/CN=dbarba-v.42.fr"
+		-subj "/C=ES/ST=Madrid/L=Madrid/O=42/OU=Inception/CN=${USER_LOGIN}.42.fr"
 fi

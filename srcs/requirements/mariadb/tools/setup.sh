@@ -20,7 +20,7 @@ else
     if [ -f "$TARGET_CONF" ]; then
         echo "No template found at $TEMPLATE, using existing $TARGET_CONF"
     else
-        echo "No template found at $TEMPLATE and $TARGET_CONF does not exist — continuing without custom config"
+        echo "No template found at $TEMPLATE and $TARGET_CONF does not exist, continuing without custom config"
     fi
 fi
 

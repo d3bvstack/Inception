@@ -37,6 +37,8 @@ Note: The Makefile runs a small helper that will prompt for any missing secret f
 
 ## Accessing the Site
 
+> The following urls will be valid only if project was made on default VM
+
 | URL                              | Description        |
 |----------------------------------|--------------------|
 | `https://dbarba-v.42.fr`         | Main site          |

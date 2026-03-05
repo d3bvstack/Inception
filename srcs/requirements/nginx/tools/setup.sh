@@ -14,8 +14,15 @@ if [ -f "$TEMPLATE" ]; then
     echo "Generating config file \"$TARGET_CONF\""
     # Only substitute these environment variables. Adjust list if you add more.
     envsubst '\${DOMAIN_NAME} \${NGINX_LISTEN_PORT} \${NGINX_HOST_PORT} \${CERT_NAME} \${KEY_NAME} \${CERT_PATH} \${KEY_PATH} \${WEB_DATA} \${WP_CONTAINER_NAME} \${PHPFPM_HOST} \${PHPFPM_LISTEN_PORT}' < "$TEMPLATE" > "$TARGET_CONF"
+    rm -rf "$TEMPLATE"
 else
-    echo "No template found at $TEMPLATE, skipping envsubst"
+    echo "No template found at $TEMPLATE"
+    if [ -f "$TARGET_CONF" ]; then
+        echo "Config \"$TARGET_CONF\" found, continuing (container restart)"
+    else
+        echo "ERROR: No template and no existing config at $TARGET_CONF"
+        exit 1
+    fi
 fi
 
 # Validate nginx configuration before starting

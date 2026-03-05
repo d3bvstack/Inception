@@ -41,8 +41,8 @@ server {
     listen [::]:${NGINX_LISTEN_PORT} ssl reuseport;
 
     # SSL Certificates (Injected via Environment)
-    ssl_certificate     ${CERT_PATH}/ssl_cert;
-    ssl_certificate_key ${KEY_PATH}/ssl_key;
+    ssl_certificate     ${CERT_PATH}/${CERT_NAME};
+    ssl_certificate_key ${KEY_PATH}/${KEY_NAME};
 
     server_name ${DOMAIN_NAME} www.${DOMAIN_NAME};
 

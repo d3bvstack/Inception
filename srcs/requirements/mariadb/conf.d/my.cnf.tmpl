@@ -9,6 +9,8 @@ plugin_dir              = /usr/lib/mysql/plugin/ # Default
 character-set-server    = ${MDB_CHARSET}
 collation-server        = ${MDB_COLLATION}
 log-error               = /var/log/mariadb/mariadb.log #Default dir
+expire_logs_days 		= 1
+max_binlog_size 		= 100M
 
 # -- Network --
 bind-address            = 0.0.0.0 # Listens to all interfaces ¿¿MIGHT REQUIRE FIREWALL??

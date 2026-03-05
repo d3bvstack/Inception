@@ -7,8 +7,8 @@ networks:
     internal: true
     ipam:
       config:
-        - subnet: 172.28.0.0/28 # 0-15
-          gateway: 172.28.0.1
+        - subnet: ${NETWORK_BACKEND_SUBNET} # 16-31
+          gateway: ${NETWORK_BACKEND_GATEWAY}
 
   # Configuration for the frontend network
   frontend_net:
@@ -17,5 +17,5 @@ networks:
     internal: false
     ipam:
       config:
-        - subnet: 172.28.0.16/28 # 16-32
-          gateway: 172.28.0.17
+        - subnet: ${NETWORK_FRONTEND_SUBNET} # 0-15
+          gateway: ${NETWORK_FRONTEND_GATEWAY}

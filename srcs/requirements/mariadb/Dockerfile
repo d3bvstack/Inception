@@ -19,6 +19,5 @@ RUN chmod +x /usr/local/bin/setup.sh
 RUN chmod +x /usr/local/bin/healthcheck.sh
 
 ENTRYPOINT ["/bin/bash", "/usr/local/bin/setup.sh"]
-# CMD ["/usr/sbin/mariadbd", "--user=mysql", "--datadir=/var/lib/mysql"]
 
 EXPOSE 3306
