@@ -5,3 +5,4 @@
 # Sensitive keys
 **/*.pem
 **/*.key
+**/*.cert

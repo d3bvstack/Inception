@@ -6,7 +6,7 @@
 #    By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/23 09:42:26 by dbarba-v          #+#    #+#              #
-#    Updated: 2026/03/04 15:26:56 by dbarba-v         ###   ########.fr        #
+#    Updated: 2026/03/05 15:07:32 by dbarba-v         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -32,16 +32,21 @@ CONFIG = $(COMPOSE) -f $(DOCKERFILE) config
 CLEAN = $(COMPOSE) -f $(DOCKERFILE) down --volumes
 FCLEAN = $(COMPOSE) -f $(DOCKERFILE) down --volumes --rmi all
 
-.PHONY: inception all up down stop restart ps shell build config clean fclean re help
+-include srcs/.env
+export $(shell sed 's/=.*//' srcs/.env)
+
+.PHONY: inception all secrets up down stop restart ps shell build config clean fclean re help
 
 inception: all
 
 all: up
 
-up:
+secrets:
 	@sh srcs/tools/check-secrets.sh
 	@mkdir -p "/home/$$USER/data/mariadb" && \
 	 mkdir -p "/home/$$USER/data/wordpress"
+
+up: secrets
 	$(UP)
 
 down:

@@ -24,6 +24,7 @@ RUN apt-get update \
 		imagemagick \
 		openssl \
 		gettext-base \
+		netcat-openbsd \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /var/www \

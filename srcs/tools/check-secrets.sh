@@ -1,14 +1,14 @@
 #!/bin/sh
 set -eu
 
-SECRETS="
+CRED_SECRETS="
 srcs/secrets/wordpress-php/wp_admin_password.secret
 srcs/secrets/wordpress-php/wp_user_password.secret
 srcs/secrets/mariadb/mysql_root_password.secret
 srcs/secrets/mariadb/mysql_wp_db_admin_password.secret
 "
 
-for file in $SECRETS; do
+for file in $CRED_SECRETS; do
   [ -z "$file" ] && continue
   [ -f "$file" ] && continue
 
@@ -24,3 +24,15 @@ for file in $SECRETS; do
   chmod 0400 "$file" 2>/dev/null || true
   printf "Created %s\n" "$file" >&2
 done
+
+if [[ ! -f "srcs/secrets/ssl/${KEY_NAME}" || ! -f "srcs/secrets/ssl/${CERT_NAME}" ]]; then
+  printf "Generating SSL key and certificate.\n"
+  openssl req -x509 \
+		-newkey rsa:4096 \
+		-keyout "srcs/secrets/ssl/${KEY_NAME}" \
+		-out "srcs/secrets/ssl/${CERT_NAME}" \
+		-sha256 \
+		-days 3650 \
+		-nodes \
+		-subj "/C=ES/ST=Madrid/L=Madrid/O=42/OU=Inception/CN=dbarba-v.42.fr"
+fi
