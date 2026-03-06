@@ -110,6 +110,7 @@ Connects PHP-FPM ↔ MariaDB.
 | `DB_SERVICE_PORT` | MariaDB port reachable by WordPress |
 | `DB_NAME` | Database name WordPress connects to |
 | `DB_USER` | Database user WordPress connects as |
+| `WP_VERSION` | WordPress version to install |
 | `WP_ADMIN` | WordPress administrator username |
 | `WP_ADMIN_MAIL` | Administrator email address |
 | `WP_USER` | Additional WordPress user username |

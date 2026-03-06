@@ -3,13 +3,8 @@ set -euo pipefail
 
 # Defaults
 WP_CMD="/usr/local/bin/wp"
-WP_VERSION="${WP_VERSION:-latest}"
 WWW_USER="${WWW_USER:-www-data}"
 WWW_GROUP="${WWW_GROUP:-$WWW_USER}"
-DOMAIN_NAME="${DOMAIN_NAME:-${USER_LOGIN:-localhost}}"
-ROOT_DOMAIN="${ROOT_DOMAIN:-${DOMAIN_NAME}}"
-WWW_ROOT="/var/www/${DOMAIN_NAME}"
-PHP_FPM_VERSION="8.2"
 
 # Secrets
 DB_PASS=$(cat /run/secrets/mysql_wp_db_admin_password)
@@ -47,36 +42,36 @@ install_wp_cli() {
 main() {
 	install_wp_cli
 
-	mkdir -p "$WWW_ROOT"
+	mkdir -p "$WP_WEBROOT"
 
 	# Download core files only if not already present
-	if [ ! -f "${WWW_ROOT}/wp-load.php" ]; then
+	if [ ! -f "${WP_WEBROOT}/wp-load.php" ]; then
 		echo "Downloading WordPress ($WP_VERSION)"
 		if [ "$WP_VERSION" = "latest" ]; then
-			wp core download --path=${WWW_ROOT} --skip-content --allow-root
+			wp core download --path=${WP_WEBROOT} --skip-content --allow-root
 		else
-			wp core download --path=${WWW_ROOT} --version="$WP_VERSION" --skip-content --allow-root
+			wp core download --path=${WP_WEBROOT} --version="$WP_VERSION" --skip-content --allow-root
 		fi
 	else
-		echo "WordPress core files already present at ${WWW_ROOT}, skipping download"
+		echo "WordPress core files already present at ${WP_WEBROOT}, skipping download"
 	fi
 
 	# Configure and install only if wp-config.php is missing
-	if [ ! -f "${WWW_ROOT}/wp-config.php" ]; then
+	if [ ! -f "${WP_WEBROOT}/wp-config.php" ]; then
 		echo "Generating wp-config.php"
-		wp --path=${WWW_ROOT} config create --dbname="${DB_NAME}" --dbuser="${DB_ADMIN}" --dbhost="${DB_HOST}:${DB_PORT}" --dbpass="$DB_PASS" --allow-root
+		wp --path=${WP_WEBROOT} config create --dbname="${DB_NAME}" --dbuser="${DB_ADMIN}" --dbhost="${DB_HOST}:${DB_PORT}" --dbpass="$DB_PASS" --allow-root
 
 		echo "Installing WordPress"
-		wp --path=${WWW_ROOT} core install --url="${ROOT_DOMAIN}" --title="${SITE_TITLE}" --admin_user="${WP_ADMIN}" --admin_password="$ADMIN_PASS" --admin_email="${WP_ADMIN_MAIL}" --allow-root
+		wp --path=${WP_WEBROOT} core install --url="https://${DOMAIN_NAME}" --title="${SITE_TITLE}" --admin_user="${WP_ADMIN}" --admin_password="$ADMIN_PASS" --admin_email="${WP_ADMIN_MAIL}" --allow-root
 
 		echo "Updating plugins"
-		wp --path=${WWW_ROOT} plugin update --all --allow-root || true
+		wp --path=${WP_WEBROOT} plugin update --all --allow-root || true
 
 		echo "Creating editor user"
-		wp --path=${WWW_ROOT} user create "${WP_USER}" "${WP_USER_MAIL}" --role="${WP_USER_ROLE}" --user_pass="$WP_USER_PASS" --porcelain --allow-root || true
+		wp --path=${WP_WEBROOT} user create "${WP_USER}" "${WP_USER_MAIL}" --role="${WP_USER_ROLE}" --user_pass="$WP_USER_PASS" --porcelain --allow-root || true
 
 		echo "Installing and activating default theme"
-		wp --path=${WWW_ROOT} theme install twentytwentythree --activate --allow-root || true
+		wp --path=${WP_WEBROOT} theme install twentytwentythree --activate --allow-root || true
 
 		ID=$(wp --path=/var/www/${DOMAIN_NAME} post create --post_type=page --post_title="Welcome to Inception" --post_content="Welcome to dbarba-v inception." --post_status=publish --porcelain --allow-root)
 		wp --path=/var/www/${DOMAIN_NAME} option update page_on_front $ID --allow-root \
@@ -88,9 +83,9 @@ main() {
 	fi
 
 	# Ensure correct permission
-	chown -R "$WWW_USER":"$WWW_GROUP" "$WWW_ROOT"
-	find "$WWW_ROOT" -type d -exec chmod 755 {} +
-	find "$WWW_ROOT" -type f -exec chmod 644 {} +
+	chown -R "$WWW_USER":"$WWW_GROUP" "$WP_WEBROOT"
+	find "$WP_WEBROOT" -type d -exec chmod 755 {} +
+	find "$WP_WEBROOT" -type f -exec chmod 644 {} +
 
 	echo "WordPress setup complete"
 }
