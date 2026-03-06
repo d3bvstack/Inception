@@ -25,7 +25,7 @@ for file in $CRED_SECRETS; do
   printf "Created %s\n" "$file" >&2
 done
 
-if [[ ! -f "srcs/secrets/ssl/${KEY_NAME}" || ! -f "srcs/secrets/ssl/${CERT_NAME}" ]]; then
+if [ ! -f "srcs/secrets/ssl/${KEY_NAME}" ] || [ ! -f "srcs/secrets/ssl/${CERT_NAME}" ]; then
   mkdir -p srcs/secrets/ssl
   printf "Generating SSL key and certificate.\n"
   openssl req -x509 \

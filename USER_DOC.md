@@ -21,17 +21,19 @@ This infrastructure runs a WordPress site backed by the following services:
 make
 ```
 
-> Aliases: `make inception` `make all` or `make up`
+> Aliases: `make inception`, `make all`, or `make up`
 
 Note: The Makefile runs a small helper that will prompt for any missing secret files (created under `srcs/secrets/`) when starting the stack.
 
 ### Stop, restart, or clean up
 
-| Command        | Effect                                              |
-|----------------|-----------------------------------------------------|
-| `make stop`    | Stop all running containers                         |
-| `make restart` | Restart all containers                              |
-| `make fclean`  | Stop and remove all containers, networks, and images|
+| Command        | Effect                                                                        |
+|----------------|-------------------------------------------------------------------------------|
+| `make stop`    | Stop all running containers (keeps containers and volumes)                    |
+| `make down`    | Stop and remove containers and networks (keeps volumes)                       |
+| `make restart` | Restart all containers                                                        |
+| `make clean`   | Stop and remove containers and volumes                                        |
+| `make fclean`  | Full cleanup — containers, volumes, images, and host data directories         |
 
 ---
 
@@ -56,14 +58,17 @@ srcs/secrets/
 ├── mariadb/
 │   ├── mysql_root_password.secret
 │   └── mysql_wp_db_admin_password.secret
-└── wordpress-php/
-    ├── wp_admin_password.secret
-    └── wp_user_password.secret
+├── wordpress-php/
+│   ├── wp_admin_password.secret
+│   └── wp_user_password.secret
+└── ssl/
+    ├── dbarba-v.42.fr.cert
+    └── dbarba-v.42.fr.key
 ```
 
 Each file must contain only the secret value (no trailing newline).
 
-If a file is missing, `make` prompts interactively for its value and writes it with `0400` permissions. If in non-interactive environments (no TTY) the check will fail; create the files beforehand.
+If a file is missing, `make` prompts interactively for its value. If in non-interactive environments (no TTY) the check will fail; create the files beforehand.
 
 ---
 

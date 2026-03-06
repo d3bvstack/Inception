@@ -1,6 +1,6 @@
 # Inception
 
-- [Description](#description)
+- [Project Description](#project-description)
 - [Virtual Machines vs Docker](#virtual-machines-vs-docker)
 - [Docker Networks vs Host Network](#docker-networks-vs-host-network)
 - [Docker Secrets vs Environment Variables](#docker-secrets-vs-environment-variables)
@@ -26,9 +26,9 @@ The three services, their roles, and how they connect:
 
 | Service | Role | Port(s) | Volume |
 |---|---|---|---|
-| NGINX | Reverse proxy, endpoint for HTTPS traffic, serving static files and forwarding PHP to PHP-FPM | 443 | `wordpress_data`:`/var/www/dbarba-v` |
-| WordPress + PHP-FPM | CMS, PHP runtime | 9000 (PHP-FPM) 3306 (MariaDB) | `wordpress_data`:`/var/www/dbarba-v` |
-| MariaDB | Relational database management | 3306 | database files at `/var/lib/mysql` |
+| NGINX | Reverse proxy, endpoint for HTTPS traffic, serving static files and forwarding PHP to PHP-FPM | 443 | `wordpress_data`:`/var/www` |
+| WordPress + PHP-FPM | CMS, PHP runtime | 9000 (PHP-FPM)| wordpress_data `/var/www` |
+| MariaDB | Relational database management | 3306 | database_data `/var/lib/mysql` |
 
 Everything is wired together in a single `docker-compose.yml`. Two user-defined networks enforce a clean separation: the `frontend` network connects NGINX to WordPress/PHP-FPM, and the `backend` network connects WordPress/PHP-FPM to MariaDB. NGINX has no route to the database, and the database is never exposed to the outside world.
 
@@ -54,13 +54,17 @@ User-defined bridge networks solve both problems. Docker's embedded DNS resolves
 
 That is why this project uses two networks. NGINX sits on `frontend` and talks to WordPress. WordPress sits on both networks and talks to MariaDB over `backend`. MariaDB is on `backend` only and is completely unreachable from NGINX or the outside.
 
+![Comparison between Bridge and host networks in docker](.doc/bridgeVShost-d3bvstack.svg)
+
 ### Docker Secrets vs Environment Variables
 
-A `.env` file contains a dictionary of key-value pairs used for general configurations like the domain name, port numbers of each service, or the name of the database, values that change across environments but are not sensitive. Compose interpolates them into the compose file at runtime, which makes the setup configurable without touching the compose file itself.
+A `.env` file contains a dictionary of key-value pairs used for general configurations like the domain name, port numbers of each service, or the name of the database, values that change across environments but are not sensitive. Docker compose interpolates values from main `.env` into the compose file at runtime, which makes the setup configurable without touching the compose file itself.
+
+This infrastructure also makes use of individual service-level `.env` files, this ones are not for interpolation on compose file but to set values in the environment of the container at runtime and are configured by using the docker compose `env-file` option on the service.
 
 Credentials are a different story. Putting a database root password in a `.env` file means it ends up in the environment of every process that reads it, it might get accidentally committed to a repository, and it is visible to anyone who runs `docker inspect`. Docker Secrets are the solution for this, the secret is defined as a file on the host, Compose mounts it read-only inside the container at `/run/secrets/<name>`, and only the services explicitly granted access to it can see it. Nothing ends up in environment variables or image layers.
 
-This project uses four secrets:
+This project uses six secrets:
 
 | Secret file | Purpose |
 |---|---|
@@ -68,6 +72,8 @@ This project uses four secrets:
 | `srcs/secrets/mariadb/mysql_wp_db_admin_password.secret` | Password for the WordPress database user (what PHP-FPM connects as, not root) |
 | `srcs/secrets/wordpress-php/wp_admin_password.secret` | WordPress admin account password |
 | `srcs/secrets/wordpress-php/wp_user_password.secret` | WordPress user account password |
+| `srcs/secrets/ssl/dbarba-v.42.fr.cert` | SSL certificate used by NGINX |
+| `srcs/secrets/ssl/dbarba-v.42.fr.key` | SSL private key used by NGINX |
 
 ### Docker Volumes vs Bind Mounts
 
@@ -93,17 +99,17 @@ The `Makefile` covers everything. Run `make help` to see the full list, but the 
 
 | Command | Description |
 |---|---|
-| `make` / `make inception` | Build images and start all containers |
-| `make up` | Start all containers in detached mode |
+| `make` / `make inception` / `make all` / `make up` | Start all containers in detached mode |
+| `make build` | Rebuild images (reads the configured `.env`) |
 | `make down` | Stop and remove containers and networks |
 | `make stop` | Stop running containers without removing them |
 | `make restart` | Restart all containers |
 | `make ps` | Show container status |
 | `make shell SERVICE=<name>` | Open `/bin/sh` inside a running container |
-| `make build` | Rebuild images (reads the configured `.env`) |
 | `make config` | Print the resolved Compose configuration (good for debugging) |
+| `make secrets` | Check for secrets and create missing ones |
 | `make clean` | Remove containers and volumes |
-| `make fclean` | Full cleanup — containers, volumes, and images |
+| `make fclean` | Full cleanup — containers, volumes, images, and host data directories |
 | `make re` | Full rebuild (`fclean` + `all`) |
 
 ---

@@ -22,7 +22,7 @@ TARGET_PHP_FPM="/etc/php/${PHP_FPM_VERSION}/fpm/php-fpm.conf"
 if [ -f "$PHP_FPM_CONF" ]; then
 	echo "Config template \"$PHP_FPM_CONF\" found"
 	echo "Generating config file \"$TARGET_PHP_FPM\""
-	envsubst '\${NGINX_LISTEN_PORT}' < "$PHP_FPM_CONF" > "$TARGET_PHP_FPM"
+	envsubst '\${PHPFPM_LISTEN_PORT}' < "$PHP_FPM_CONF" > "$TARGET_PHP_FPM"
 else
     echo "No template found at $PHP_FPM_CONF, exiting"
 	exit 1

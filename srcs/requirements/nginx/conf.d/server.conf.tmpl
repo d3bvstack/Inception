@@ -145,12 +145,3 @@ server {
 		access_log off;
 	}
 }
-
-# ==============================================================================
-# Troubleshooting & Validation
-# ==============================================================================
-# 1. Configuration Syntax:  nginx -t
-# 2. Variable Injection:    envsubst < template.conf > default.conf
-# 3. Connection Test:      nc -zv ${PHPFPM_HOST} ${PHPFPM_LISTEN_PORT}
-# 4. Logs:                 tail -f /var/log/nginx/error.log
-# ==============================================================================

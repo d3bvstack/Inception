@@ -13,10 +13,10 @@ expire_logs_days 		= 1
 max_binlog_size 		= 100M
 
 # -- Network --
-bind-address            = 0.0.0.0 # Listens to all interfaces ¿¿MIGHT REQUIRE FIREWALL??
+bind-address            = 0.0.0.0 # Listens to all interfaces
 port                    = ${MDB_ENGINE_PORT}
 max_connections         = 1024
-skip-name-resolve       = 0 # Wheteher it forces only IP addresses are used for connections
+skip-name-resolve       = 0
 
 # -- InnoDB -- (Storage engine for MySQl and MariaDB)
 # innodb_buffer_pool_size: Amount of memory InnoDB uses to cache data and indexes.

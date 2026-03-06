@@ -29,8 +29,11 @@ All project settings are controlled through `srcs/.env`. The variables are group
 
 | Variable | Description |
 |---|---|
-| `USER_LOGIN` | Login name; used to derive the domain and host data paths |
+| `USER_LOGIN` | Login name; used to derive the domain and host data |
 | `DOMAIN_NAME` | Site domain (defaults to `${USER_LOGIN}.42.fr`) |
+| `ROOT_DOMAIN` | Root domain used for WordPress install |
+| `SITE_TITLE` | Title for the WordPress site |
+| `COMPOSE_PROJECT_NAME` | Docker variable that names the compose project |
 
 ### 1.2 Networks
 
@@ -68,54 +71,51 @@ Connects PHP-FPM ↔ MariaDB.
 | `VOLUME_DB_MOUNTPOINT` | Mount path inside the container (`/var/lib/mysql`) |
 | `VOLUME_DB_HOST_PATH` | Host path where DB data is persisted |
 | `VOLUME_WP_NAME` | Docker volume name for WordPress files |
-| `VOLUME_WP_MOUNTPOINT` | Mount path inside the container (`/var/www/${DOMAIN_NAME}`) |
+| `VOLUME_WP_MOUNTPOINT` | Mount path inside the container (`/var/www`) |
 | `VOLUME_WP_HOST_PATH` | Host path where WordPress files are persisted |
 
 ### 1.4 Services
 
 #### MariaDB
 
-| Variable | Secret | Description |
-|---|---|---|
-| `MDB_BUILD_CONTEXT` | | Build context path |
-| `MDB_DOCKERFILE` | | Dockerfile filename |
-| `MDB_IMAGE_REPO` | | Image repository name |
-| `MDB_IMAGE_TAG` | | Image tag |
-| `MDB_CONTAINER_NAME` | | Container name |
-| `MDB_CONFIG_ENV` | | Path to the service config env-file |
-| `MDB_ROOT_PASSWORD` | ✓ | MariaDB root password |
-| `MDB_ADMIN` | | MariaDB admin username |
-| `MDB_ADMIN_PASSWORD` | ✓ | MariaDB admin password |
-| `MDB_CHARSET` | | Default character set |
-| `MDB_COLLATION` | | Default collation |
-| `MDB_ENGINE_PORT` | | MariaDB engine port (default `3306`) |
+| Variable | Description |
+|---|---|
+| `MDB_BUILD_CONTEXT` | Build context path |
+| `MDB_DOCKERFILE` | Dockerfile filename |
+| `MDB_IMAGE_REPO` | Image repository name |
+| `MDB_IMAGE_TAG` | Image tag |
+| `MDB_CONTAINER_NAME` | Container name |
+| `MDB_CONFIG_ENV` | Path to the service config env-file |
+| `MDB_ADMIN` | MariaDB admin username |
+| `MDB_CHARSET` | Default character set |
+| `MDB_COLLATION` | Default collation |
+| `MDB_ENGINE_PORT` | MariaDB engine port (default `3306`) |
 
 #### WordPress / PHP-FPM
 
-| Variable | Secret | Description |
-|---|---|---|
-| `WP_BUILD_CONTEXT` | | Build context path |
-| `WP_DOCKERFILE` | | Dockerfile filename |
-| `WP_IMAGE_REPO` | | Image repository name |
-| `WP_IMAGE_TAG` | | Image tag |
-| `WP_CONTAINER_NAME` | | Container name |
-| `WP_CONFIG_ENV` | | Path to the service config env-file |
-| `WP_DB_NAME` | | WordPress database name |
-| `WP_DB_ADMIN` | | MariaDB user with privileges on the WordPress DB |
-| `WP_DB_ADMIN_PASSWORD` | ✓ | Password for the above user |
-| `WP_DB_CHARSET` | | WordPress database character set |
-| `WP_DB_COLLATION` | | WordPress database collation |
-| `PHPFPM_LISTEN_PORT` | | PHP-FPM listener port (default `9000`) |
-| `PHPFPM_USER` | | System user PHP-FPM workers run as |
-| `NGINX` | | NGINX container hostname (for PHP-FPM config) |
-| `NGINX_PORT` | | NGINX port reachable by PHP-FPM |
-| `DB_HOST` | | Hostname of the MariaDB container |
-| `DB_SERVICE_PORT` | | MariaDB port reachable by WordPress |
-| `DB_NAME` | | Database name WordPress connects to |
-| `DB_USER` | | Database user WordPress connects as |
-| `DB_USER_PASSWORD` | ✓ | Password for the above user |
-| `WP_USERS_CREATE` | | Comma-separated list of users to create at boot (`username:role:email`) |
-| `WP_WEBROOT` | | Web root path inside the container |
+| Variable |Description |
+|---|---|
+| `WP_BUILD_CONTEXT` | Build context path |
+| `WP_DOCKERFILE` | Dockerfile filename |
+| `WP_IMAGE_REPO` | Image repository name |
+| `WP_IMAGE_TAG` | Image tag |
+| `WP_CONTAINER_NAME` | Container name |
+| `WP_CONFIG_ENV` | Path to the service config env-file |
+| `WP_DB_NAME` | WordPress database name |
+| `WP_DB_ADMIN` | MariaDB user with privileges on the WordPress DB |
+| `WP_DB_CHARSET` | WordPress database character set |
+| `WP_DB_COLLATION` | WordPress database collation |
+| `PHPFPM_LISTEN_PORT` | PHP-FPM listener port (default `9000`) |
+| `DB_HOST` | Hostname of the MariaDB container |
+| `DB_SERVICE_PORT` | MariaDB port reachable by WordPress |
+| `DB_NAME` | Database name WordPress connects to |
+| `DB_USER` | Database user WordPress connects as |
+| `WP_ADMIN` | WordPress administrator username |
+| `WP_ADMIN_MAIL` | Administrator email address |
+| `WP_USER` | Additional WordPress user username |
+| `WP_USER_ROLE` | Role for the additional user |
+| `WP_USER_MAIL` | Email address for the additional user |
+| `WP_WEBROOT` | Web root path inside the container |
 
 #### NGINX
 
@@ -138,9 +138,12 @@ Connects PHP-FPM ↔ MariaDB.
 | Variable | Description |
 |---|---|
 | `KEY_NAME` | SSL private key filename |
-| `KEY_PATH` | Directory inside the container for the key (`/etc/ssl/private`) |
+| `KEY_PATH` | Directory inside the container for the key (`/run/secrets`) |
+| `KEY_SECRET_NAME` | Name for the docker secret |
 | `CERT_NAME` | SSL certificate filename |
-| `CERT_PATH` | Directory inside the container for the certificate (`/etc/ssl/cert`) |
+| `CERT_PATH` | Directory inside the container for the certificate (`/run/secrets`) |
+| `CERT_SECRET_NAME` | Name for the docker secret  |
+
 
 ### 1.5 Derived Image Names
 
@@ -163,9 +166,12 @@ srcs/secrets/
 ├── mariadb/
 │   ├── mysql_root_password.secret         # mysql_root_password secret
 │   └── mysql_wp_db_admin_password.secret  # mysql_wp_db_admin_password secret
-└── wordpress-php/
-    ├── wp_admin_password.secret            # wp_admin_password secret
-    └── wp_user_password.secret             # wp_user_password secret
+├── wordpress-php/
+│   ├── wp_admin_password.secret           # wp_admin_password secret
+│   └── wp_user_password.secret            # wp_user_password secret
+└── ssl/
+    ├── dbarba-v.42.fr.cert                # SSL certificate secret
+    └── dbarba-v.42.fr.key                 # SSL private key secret
 ```
 
 ---
@@ -187,8 +193,7 @@ srcs/secrets/
 
 | Command | Description |
 |---|---|
-| `make` / `make inception` | Build images and start all containers |
-| `make up` | Start all containers in detached mode |
+| `make` / `make inception` / `make all` / `make up` | Start all containers in detached mode |
 | `make down` | Stop and remove containers and networks |
 | `make stop` | Stop running containers without removing them |
 | `make restart` | Restart all containers |
@@ -198,6 +203,7 @@ srcs/secrets/
 | Command | Description |
 |---|---|
 | `make ps` | Show container status |
+| `make secrets` | Check for secrets and create missing ones |
 | `make shell SERVICE=<name>` | Open a shell inside a running container |
 | `make config` | Print the resolved Compose configuration |
 
@@ -205,10 +211,10 @@ srcs/secrets/
 
 | Command | Description |
 |---|---|
-| `make build` | Rebuild images |
+| `make build` | Rebuild images (uses the configured `.env` for build args) |
 | `make clean` | Remove containers and volumes |
-| `make fclean` | Full cleanup — containers, volumes, and images |
-| `make re` | Full rebuild (`fclean` + `make`) |
+| `make fclean` | Full cleanup — containers, volumes, images, and host data directories |
+| `make re` | Full rebuild (`fclean` + `all`) |
 
 ---
 
@@ -216,5 +222,5 @@ srcs/secrets/
 
 | Data | Container path | Host path |
 |---|---|---|
-| WordPress files | `/var/www/${DOMAIN_NAME}` | `/home/${USER_LOGIN}/data/wordpress` |
+| WordPress files | `/var/www` | `/home/${USER_LOGIN}/data/wordpress` |
 | MariaDB database | `/var/lib/mysql` | `/home/${USER_LOGIN}/data/mariadb` |

@@ -6,7 +6,7 @@
 #    By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/23 09:42:26 by dbarba-v          #+#    #+#              #
-#    Updated: 2026/03/05 15:07:32 by dbarba-v         ###   ########.fr        #
+#    Updated: 2026/03/06 11:28:35 by dbarba-v         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -105,6 +105,7 @@ help:
 	@echo "  shell      Open a shell in a service (SERVICE=<name>)"
 	@echo "  build      Build images (uses $(ENV) for build args)"
 	@echo "  config     Validate and show compose configuration"
+	@echo "  secrets    Check for secrets and create missing ones"
 	@echo "  clean      Stop/remove containers and volumes"
 	@echo "  fclean     Full cleanup: containers, volumes and images"
 	@echo "  re         Full rebuild (fclean + all)"
