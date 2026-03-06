@@ -68,12 +68,12 @@ This project uses six secrets:
 
 | Secret file | Purpose |
 |---|---|
-| `srcs/secrets/mariadb/mysql_root_password.secret` | MariaDB `root` password |
-| `srcs/secrets/mariadb/mysql_wp_db_admin_password.secret` | Password for the WordPress database user (what PHP-FPM connects as, not root) |
-| `srcs/secrets/wordpress-php/wp_admin_password.secret` | WordPress admin account password |
-| `srcs/secrets/wordpress-php/wp_user_password.secret` | WordPress user account password |
-| `srcs/secrets/ssl/dbarba-v.42.fr.cert` | SSL certificate used by NGINX |
-| `srcs/secrets/ssl/dbarba-v.42.fr.key` | SSL private key used by NGINX |
+| `secrets/mariadb/mysql_root_password.secret` | MariaDB `root` password |
+| `secrets/mariadb/mysql_wp_db_admin_password.secret` | Password for the WordPress database user (what PHP-FPM connects as, not root) |
+| `secrets/wordpress-php/wp_admin_password.secret` | WordPress admin account password |
+| `secrets/wordpress-php/wp_user_password.secret` | WordPress user account password |
+| `secrets/ssl/dbarba-v.42.fr.cert` | SSL certificate used by NGINX |
+| `secrets/ssl/dbarba-v.42.fr.key` | SSL private key used by NGINX |
 
 ### Docker Volumes vs Bind Mounts
 

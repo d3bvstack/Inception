@@ -1,7 +1,7 @@
 include:
-  - ./networks/docker-compose.yml
-  - ./secrets/docker-compose.yml
-  - ./volumes/docker-compose.yml
+  - ../secrets/docker-compose.yml
+  - networks/docker-compose.yml
+  - volumes/docker-compose.yml
 
 services:
   mariadb:

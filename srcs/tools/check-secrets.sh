@@ -2,10 +2,10 @@
 set -eu
 
 CRED_SECRETS="
-srcs/secrets/wordpress-php/wp_admin_password.secret
-srcs/secrets/wordpress-php/wp_user_password.secret
-srcs/secrets/mariadb/mysql_root_password.secret
-srcs/secrets/mariadb/mysql_wp_db_admin_password.secret
+secrets/wordpress-php/wp_admin_password.secret
+secrets/wordpress-php/wp_user_password.secret
+secrets/mariadb/mysql_root_password.secret
+secrets/mariadb/mysql_wp_db_admin_password.secret
 "
 
 for file in $CRED_SECRETS; do
@@ -25,13 +25,13 @@ for file in $CRED_SECRETS; do
   printf "Created %s\n" "$file" >&2
 done
 
-if [ ! -f "srcs/secrets/ssl/${KEY_NAME}" ] || [ ! -f "srcs/secrets/ssl/${CERT_NAME}" ]; then
-  mkdir -p srcs/secrets/ssl
+if [ ! -f "secrets/ssl/${KEY_NAME}" ] || [ ! -f "secrets/ssl/${CERT_NAME}" ]; then
+  mkdir -p secrets/ssl
   printf "Generating SSL key and certificate.\n"
   openssl req -x509 \
 		-newkey rsa:4096 \
-		-keyout "srcs/secrets/ssl/${KEY_NAME}" \
-		-out "srcs/secrets/ssl/${CERT_NAME}" \
+		-keyout "secrets/ssl/${KEY_NAME}" \
+		-out "secrets/ssl/${CERT_NAME}" \
 		-sha256 \
 		-days 3650 \
 		-nodes \

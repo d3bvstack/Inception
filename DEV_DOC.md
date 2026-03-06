@@ -163,7 +163,7 @@ These variables are composed from the repo and tag variables above and do not ne
 Secret values are read from files and are **not** stored in `.env`. Create the following files before the first build:
 
 ```
-srcs/secrets/
+secrets/
 ├── mariadb/
 │   ├── mysql_root_password.secret         # mysql_root_password secret
 │   └── mysql_wp_db_admin_password.secret  # mysql_wp_db_admin_password secret
