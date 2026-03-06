@@ -27,7 +27,7 @@ The three services, their roles, and how they connect:
 | Service | Role | Port(s) | Volume |
 |---|---|---|---|
 | NGINX | Reverse proxy, endpoint for HTTPS traffic, serving static files and forwarding PHP to PHP-FPM | 443 | `wordpress_data`:`/var/www` |
-| WordPress + PHP-FPM | CMS, PHP runtime | 9000 (PHP-FPM)| wordpress_data `/var/www` |
+| WordPress + PHP-FPM | CMS, PHP runtime | 9000 (PHP-FPM) | wordpress_data `/var/www` |
 | MariaDB | Relational database management | 3306 | database_data `/var/lib/mysql` |
 
 Everything is wired together in a single `docker-compose.yml`. Two user-defined networks enforce a clean separation: the `frontend` network connects NGINX to WordPress/PHP-FPM, and the `backend` network connects WordPress/PHP-FPM to MariaDB. NGINX has no route to the database, and the database is never exposed to the outside world.

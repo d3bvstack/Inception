@@ -182,9 +182,9 @@ srcs/secrets/
 | Service | File |
 |---|---|
 | NGINX | `srcs/requirements/nginx/nginx.conf` |
-| NGINX (vhost) | `srcs/requirements/nginx/conf.d/server.conf.tmpl` |
+| NGINX (vhost) | `srcs/requirements/nginx/conf/server.conf.tmpl` |
 | PHP-FPM | `srcs/requirements/wordpress-php/php-fpm.conf` |
-| MariaDB | `srcs/requirements/mariadb/conf.d/my.cnf.tmpl` |
+| MariaDB | `srcs/requirements/mariadb/conf/my.cnf.tmpl` |
 
 ---
 

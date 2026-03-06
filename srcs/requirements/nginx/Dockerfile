@@ -8,7 +8,7 @@ RUN apt-get update \
 COPY --link ./tools/setup.sh /usr/local/bin/setup.sh
 
 COPY --link ./nginx.conf /etc/nginx/nginx.conf
-COPY --link ./conf.d/server.conf.tmpl /etc/nginx/conf.d/server.conf.tmpl
+COPY --link ./conf/server.conf.tmpl /etc/nginx/conf.d/server.conf.tmpl
 
 # COPY --link ./tools/index.html var/www/dbarba-v.42.fr/public/index.html
 

@@ -90,7 +90,7 @@ main() {
 	echo "WordPress setup complete"
 }
 
-# Run php-fpm in the foreground
+
 main "$@"
 
 if command -v "php-fpm${PHP_FPM_VERSION}" >/dev/null 2>&1; then
