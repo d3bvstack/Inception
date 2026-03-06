@@ -15,6 +15,11 @@ This infrastructure runs a WordPress site backed by the following services:
 
 ## Getting Started
 
+> Need to modify /etc/hosts by adding:
+>
+> 127.0.0.1     dbarba-v.42.fr
+> 127.0.0.1     www.dbarba-v.42.fr
+
 ### Start the infrastructure
 
 ```sh

@@ -16,5 +16,4 @@ RUN chmod +x /usr/local/bin/setup.sh
 
 ENTRYPOINT ["/bin/bash", "/usr/local/bin/setup.sh"]
 
-EXPOSE 9000
 EXPOSE 443
