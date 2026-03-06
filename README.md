@@ -32,7 +32,7 @@ The three services, their roles, and how they connect:
 
 Everything is wired together in a single `docker-compose.yml`. Two user-defined networks enforce a clean separation: the `frontend` network connects NGINX to WordPress/PHP-FPM, and the `backend` network connects WordPress/PHP-FPM to MariaDB. NGINX has no route to the database, and the database is never exposed to the outside world.
 
-![Inception Diagram Overview](.doc/InceptionOverview-d3bvstack.svg)
+[![Inception Diagram Overview](.doc/InceptionOverview-d3bvstack.svg)](.doc/InceptionOverview-d3bvstack.png)
 
 ### Virtual Machines vs Docker
 
@@ -42,7 +42,7 @@ Docker containers share the host kernel; Docker uses Linux primitives like names
 
 For a project like this, where the goal is rapid iteration and reproducible environments, containers are the obvious fit. You can destroy the whole stack with one command and rebuild it from scratch in under a minute. Doing the same with VMs would be more time consumming and resource intensive.
 
-![General difference between VMs and Containers](.doc/vmVScontainer-d3bvstack.svg)
+[![General difference between VMs and Containers](.doc/vmVScontainer-d3bvstack.svg)](.doc/vmVScontainer-d3bvstack.png)
 
 ### Docker Networks vs Host Network
 
@@ -54,7 +54,7 @@ User-defined bridge networks solve both problems. Docker's embedded DNS resolves
 
 That is why this project uses two networks. NGINX sits on `frontend` and talks to WordPress. WordPress sits on both networks and talks to MariaDB over `backend`. MariaDB is on `backend` only and is completely unreachable from NGINX or the outside.
 
-![Comparison between Bridge and host networks in docker](.doc/bridgeVShost-d3bvstack.svg)
+[![Comparison between Bridge and host networks in docker](.doc/bridgeVShost-d3bvstack.svg)](.doc/bridgeVShost-d3bvstack.png)
 
 ### Docker Secrets vs Environment Variables
 
