@@ -30,12 +30,12 @@ RUN apt-get update \
 RUN mkdir -p /var/www \
 	&& chown -R www-data:www-data /var/www
 
-COPY --link ./php-fpm.conf     /etc/php/${PHP_FPM_VERSION}/fpm/php-fpm.conf.tmpl
-COPY --link ./tools/setup.sh         /usr/local/bin/setup.sh
+WORKDIR /wordpress-php-docker
 
-RUN chmod +x /usr/local/bin/setup.sh
-# RUN chmod +x /usr/local/bin/health_check.sh
+COPY --link . .
 
-ENTRYPOINT ["/bin/bash", "/usr/local/bin/setup.sh"]
+RUN chmod +x /wordpress-php-docker/tools/setup.sh
+
+ENTRYPOINT ["/bin/bash", "/wordpress-php-docker/tools/setup.sh"]
 
 EXPOSE 9000

@@ -2,7 +2,19 @@
 set -euo pipefail
 
 # Paths
-TEMPLATE=/etc/nginx/conf.d/server.conf.tmpl
+NGINX_CONF=/nginx-docker/conf/nginx.conf
+NGINX_CONF_TARGET=/etc/nginx/nginx.conf
+
+if [ -f "$NGINX_CONF" ]; then
+    echo "Nginx config file \"$NGINX_CONF\" found"
+    echo "Moving to \"$NGINX_CONF_TARGET\""
+    mv -f $NGINX_CONF $NGINX_CONF_TARGET
+else
+    echo "ERROR: No existing Nginx config at $NGINX_CONF"
+    exit 1
+fi
+
+TEMPLATE=/nginx-docker/conf/server.conf.tmpl
 TARGET_DIR=/etc/nginx/conf.d
 TARGET_CONF="$TARGET_DIR/$DOMAIN_NAME.conf"
 

@@ -10,13 +10,36 @@
 # 3. URI Resolution     -> Checks for static files, then passes to PHP if needed
 #
 # ENVIRONMENT VARIABLES:
-#   - ROOT_DOMAIN:   Main domain (e.g., login.42.fr).
+#   - DOMAIN_NAME:   Main domain (e.g., login.42.fr).
 #   - NGINX_IP:      Container's IPv4 address or hostname.
 #   - PHPFPM_HOST:    Hostname of the backend service (e.g., 'wordpress').
 #   - PHPFPM_LISTEN_PORT:  Listening port of PHP-FPM (standard: 9000).
 #   - CERT_PATH: Path to the public certificate (.crt).
 #   - KEY_PATH:  Path to the private key (.key).
 # ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 0. DEFAULT CATCH-ALL (REJECT UNRECOGNIZED DOMAINS)
+# ------------------------------------------------------------------------------
+# These blocks ensure that requests for the IP address directly or unknown
+# hostnames are rejected with a 444 (No Response).
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+    return 444;
+}
+
+server {
+    listen ${NGINX_LISTEN_PORT} ssl default_server;
+    listen [::]:${NGINX_LISTEN_PORT} ssl default_server;
+    server_name _;
+
+    ssl_certificate     ${CERT_PATH}/${CERT_NAME};
+    ssl_certificate_key ${KEY_PATH}/${KEY_NAME};
+
+    return 444;
+}
 
 # ------------------------------------------------------------------------------
 # 1. HTTP SERVER (REDIRECTOR)
@@ -27,7 +50,7 @@ server {
     listen 80 reuseport;
     listen [::]:80 reuseport;
 
-    server_name _;
+    server_name ${DOMAIN_NAME} www.${DOMAIN_NAME};
 
     # Enforce HTTPS globally. $host preserves the requested domain name.
     return 301 https://$host:${NGINX_HOST_PORT}$request_uri;

@@ -6,7 +6,7 @@
 #    By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/23 09:42:26 by dbarba-v          #+#    #+#              #
-#    Updated: 2026/03/06 11:28:35 by dbarba-v         ###   ########.fr        #
+#    Updated: 2026/03/07 14:50:24 by dbarba-v         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -43,10 +43,10 @@ all: up
 
 secrets:
 	@sh srcs/tools/check-secrets.sh
-	@mkdir -p "/home/$$USER/data/mariadb" && \
-	 mkdir -p "/home/$$USER/data/wordpress"
 
 up: secrets
+	@mkdir -p "/home/$$USER/data/mariadb" && \
+	 mkdir -p "/home/$$USER/data/wordpress"
 	$(UP)
 
 down:
@@ -62,7 +62,6 @@ ps:
 	$(PS)
 
 shell:
-	@# Usage: make shell SERVICE=<service>
 	@if [ -z "$(SERVICE)" ]; then \
 		echo "Error: SERVICE is not set"; \
 		echo "Usage: make shell SERVICE=<service>"; \

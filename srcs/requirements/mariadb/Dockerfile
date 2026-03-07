@@ -11,13 +11,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN mkdir -p /run/mysqld /var/lib/mysql \
 	&& chown -R mysql:mysql /run/mysqld /var/lib/mysql /etc/mysql/mariadb.conf.d/ /var/log/
 
-COPY --link ./conf/my.cnf.tmpl /etc/mysql/mariadb.conf.d/99-custom.cnf.tmpl
-COPY --link ./tools/setup.sh     /usr/local/bin/setup.sh
-COPY --link ./tools/healthcheck.sh     /usr/local/bin/healthcheck.sh
+WORKDIR /mariadb-docker
 
-RUN chmod +x /usr/local/bin/setup.sh
-RUN chmod +x /usr/local/bin/healthcheck.sh
+COPY --link . .
 
-ENTRYPOINT ["/bin/bash", "/usr/local/bin/setup.sh"]
+RUN chmod +x /mariadb-docker/tools/setup.sh
+RUN chmod +x /mariadb-docker/tools/healthcheck.sh
+
+ENTRYPOINT ["/bin/bash", "/mariadb-docker/tools/setup.sh"]
 
 EXPOSE 3306

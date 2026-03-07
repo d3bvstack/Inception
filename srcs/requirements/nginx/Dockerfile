@@ -5,15 +5,12 @@ RUN apt-get update \
 	&& apt-get install -y nginx gettext-base \
 	&& rm -rf /var/lib/apt/lists/*
 
-COPY --link ./tools/setup.sh /usr/local/bin/setup.sh
+WORKDIR /nginx-docker
 
-COPY --link ./nginx.conf /etc/nginx/nginx.conf
-COPY --link ./conf/server.conf.tmpl /etc/nginx/conf.d/server.conf.tmpl
+COPY --link . .
 
-# COPY --link ./tools/index.html var/www/dbarba-v.42.fr/public/index.html
+RUN chmod +x /nginx-docker/tools/setup.sh
 
-RUN chmod +x /usr/local/bin/setup.sh
-
-ENTRYPOINT ["/bin/bash", "/usr/local/bin/setup.sh"]
+ENTRYPOINT ["/bin/bash", "/nginx-docker/tools/setup.sh"]
 
 EXPOSE 443

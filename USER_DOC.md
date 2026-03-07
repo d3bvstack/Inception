@@ -56,10 +56,10 @@ Note: The Makefile runs a small helper that will prompt for any missing secret f
 
 ## Credentials
 
-Secrets are stored as plain-text files under `srcs/secrets/`:
+Secrets are stored as plain-text files under `secrets/`:
 
 ```
-srcs/secrets/
+secrets/
 ├── mariadb/
 │   ├── mysql_root_password.secret
 │   └── mysql_wp_db_admin_password.secret

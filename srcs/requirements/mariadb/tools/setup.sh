@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Paths
-TEMPLATE=/etc/mysql/mariadb.conf.d/99-custom.cnf.tmpl
+TEMPLATE=/mariadb-docker/conf/my.cnf.tmpl
 TARGET_DIR=/etc/mysql/mariadb.conf.d
 TARGET_CONF="$TARGET_DIR/99-custom.cnf"
 

@@ -1,7 +1,7 @@
 include:
-  - ../secrets/docker-compose.yml
-  - networks/docker-compose.yml
-  - volumes/docker-compose.yml
+  - secrets-compose.yml
+  - networks-compose.yml
+  - volumes-compose.yml
 
 services:
   mariadb:
@@ -20,7 +20,7 @@ services:
       backend_net:
         ipv4_address: ${NETWORK_BACKEND_DB_IP}
     healthcheck:
-      test: ["CMD-SHELL", "/usr/local/bin/healthcheck.sh"]
+      test: ["CMD-SHELL", "/mariadb-docker/tools/healthcheck.sh"]
       interval: 10s
       timeout: 5s
       retries: 10

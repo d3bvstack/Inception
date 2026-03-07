@@ -181,9 +181,9 @@ secrets/
 
 | Service | File |
 |---|---|
-| NGINX | `srcs/requirements/nginx/nginx.conf` |
+| NGINX | `srcs/requirements/nginx/conf/nginx.conf` |
 | NGINX (vhost) | `srcs/requirements/nginx/conf/server.conf.tmpl` |
-| PHP-FPM | `srcs/requirements/wordpress-php/php-fpm.conf` |
+| PHP-FPM | `srcs/requirements/wordpress-php/conf/php-fpm.conf` |
 | MariaDB | `srcs/requirements/mariadb/conf/my.cnf.tmpl` |
 
 ---
@@ -221,7 +221,7 @@ secrets/
 
 ## 5. Data Persistence
 
-| Data | Container path | Host path |
+| Volume Name | Container path | Host path |
 |---|---|---|
-| WordPress files | `/var/www` | `/home/${USER_LOGIN}/data/wordpress` |
-| MariaDB database | `/var/lib/mysql` | `/home/${USER_LOGIN}/data/mariadb` |
+| wordpress_data | `/var/www` | `/home/${USER_LOGIN}/data/wordpress` |
+| database_data | `/var/lib/mysql` | `/home/${USER_LOGIN}/data/mariadb` |

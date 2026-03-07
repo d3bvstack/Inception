@@ -12,7 +12,7 @@ ADMIN_PASS=$(cat /run/secrets/wp_admin_password)
 WP_USER_PASS=$(cat /run/secrets/wp_user_password)
 
 # Apply templated php-fpm.conf if present
-PHP_FPM_CONF="/etc/php/${PHP_FPM_VERSION}/fpm/php-fpm.conf.tmpl"
+PHP_FPM_CONF="/wordpress-php-docker/conf/php-fpm.conf.tmpl"
 TARGET_PHP_FPM="/etc/php/${PHP_FPM_VERSION}/fpm/php-fpm.conf"
 if [ -f "$PHP_FPM_CONF" ]; then
 	echo "Config template \"$PHP_FPM_CONF\" found"
