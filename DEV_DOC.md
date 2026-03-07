@@ -2,30 +2,25 @@
 
 ## Table of Contents
 
-1. [Configuration — `.env`](#1-configuration--env)
-   1. [General](#11-general)
-   2. [Networks](#12-networks)
-      - [Frontend Network](#frontend-network)
-      - [Backend Network](#backend-network)
-   3. [Volumes](#13-volumes)
-   4. [Services](#14-services)
-      - [MariaDB](#mariadb)
-      - [WordPress / PHP-FPM](#wordpress--php-fpm)
-      - [NGINX](#nginx)
-      - [SSL](#ssl)
-   5. [Derived Image Names](#15-derived-image-names)
-2. [Secrets](#2-secrets)
-3. [Configuration Files](#3-configuration-files)
-4. [Make Commands](#4-make-commands)
-5. [Data Persistence](#5-data-persistence)
+- [Configuration (`.env`)](#configuration-env)
+  - [General](#general)
+  - [Networks](#networks)
+  - [Volumes](#volumes)
+  - [Services](#services)
+  - [Derived Image Names](#derived-image-names)
+- [Secrets](#secrets)
+- [Configuration Files](#configuration-files)
+- [Make Commands](#make-commands)
+  - [Lifecycle](#lifecycle)
+  - [Inspection](#inspection)
+  - [Build & Cleanup](#build--cleanup)
+- [Data Persistence](#data-persistence)
 
----
-
-## 1. Configuration — `.env`
+## Configuration (`.env`)
 
 All project settings are controlled through `srcs/.env`. The variables are grouped by concern below.
 
-### 1.1 General
+### General
 
 | Variable | Description |
 |---|---|
@@ -35,13 +30,11 @@ All project settings are controlled through `srcs/.env`. The variables are group
 | `SITE_TITLE` | Title for the WordPress site |
 | `COMPOSE_PROJECT_NAME` | Docker variable that names the compose project |
 
-### 1.2 Networks
+### Networks
 
 Two Docker networks isolate traffic between services.
 
-#### Frontend Network
-
-Connects Internet ↔ NGINX ↔ PHP-FPM.
+**Frontend Network** — Connects Internet ↔ NGINX ↔ PHP-FPM.
 
 | Variable | Description |
 |---|---|
@@ -51,9 +44,7 @@ Connects Internet ↔ NGINX ↔ PHP-FPM.
 | `NETWORK_FRONTEND_NGINX_IP` | Static IP for the NGINX container |
 | `NETWORK_FRONTEND_PHPFPM_IP` | Static IP for the PHP-FPM container |
 
-#### Backend Network
-
-Connects PHP-FPM ↔ MariaDB.
+**Backend Network** — Connects PHP-FPM ↔ MariaDB.
 
 | Variable | Description |
 |---|---|
@@ -63,7 +54,7 @@ Connects PHP-FPM ↔ MariaDB.
 | `NETWORK_BACKEND_PHPFPM_IP` | Static IP for the PHP-FPM container |
 | `NETWORK_BACKEND_DB_IP` | Static IP for the MariaDB container |
 
-### 1.3 Volumes
+### Volumes
 
 | Variable | Description |
 |---|---|
@@ -74,9 +65,9 @@ Connects PHP-FPM ↔ MariaDB.
 | `VOLUME_WP_MOUNTPOINT` | Mount path inside the container (`/var/www`) |
 | `VOLUME_WP_HOST_PATH` | Host path where WordPress files are persisted |
 
-### 1.4 Services
+### Services
 
-#### MariaDB
+**MariaDB**
 
 | Variable | Description |
 |---|---|
@@ -91,9 +82,9 @@ Connects PHP-FPM ↔ MariaDB.
 | `MDB_COLLATION` | Default collation |
 | `MDB_ENGINE_PORT` | MariaDB engine port (default `3306`) |
 
-#### WordPress / PHP-FPM
+**WordPress + PHP-FPM**
 
-| Variable |Description |
+| Variable | Description |
 |---|---|
 | `WP_BUILD_CONTEXT` | Build context path |
 | `WP_DOCKERFILE` | Dockerfile filename |
@@ -118,7 +109,7 @@ Connects PHP-FPM ↔ MariaDB.
 | `WP_USER_MAIL` | Email address for the additional user |
 | `WP_WEBROOT` | Web root path inside the container |
 
-#### NGINX
+**NGINX**
 
 | Variable | Description |
 |---|---|
@@ -134,7 +125,7 @@ Connects PHP-FPM ↔ MariaDB.
 | `NGINX_PHP_SERVICE_PORT` | PHP-FPM port NGINX forwards requests to |
 | `WEB_DATA` | Root of served web content inside the container |
 
-#### SSL
+**SSL**
 
 | Variable | Description |
 |---|---|
@@ -143,10 +134,10 @@ Connects PHP-FPM ↔ MariaDB.
 | `KEY_SECRET_NAME` | Name for the docker secret |
 | `CERT_NAME` | SSL certificate filename |
 | `CERT_PATH` | Directory inside the container for the certificate (`/run/secrets`) |
-| `CERT_SECRET_NAME` | Name for the docker secret  |
+| `CERT_SECRET_NAME` | Name for the docker secret |
 
 
-### 1.5 Derived Image Names
+### Derived Image Names
 
 These variables are composed from the repo and tag variables above and do not need to be set manually.
 
@@ -158,7 +149,7 @@ These variables are composed from the repo and tag variables above and do not ne
 
 ---
 
-## 2. Secrets
+## Secrets
 
 Secret values are read from files and are **not** stored in `.env`. Create the following files before the first build:
 
@@ -177,7 +168,7 @@ secrets/
 
 ---
 
-## 3. Configuration Files
+## Configuration Files
 
 | Service | File |
 |---|---|
@@ -188,38 +179,38 @@ secrets/
 
 ---
 
-## 4. Make Commands
+## Make Commands
 
-### 4.1 Lifecycle
+### Lifecycle
 
 | Command | Description |
 |---|---|
 | `make` / `make inception` / `make all` / `make up` | Start all containers in detached mode |
-| `make down` | Stop and remove containers and networks |
+| `make down` | Stop and remove containers and networks (keeps volumes) |
 | `make stop` | Stop running containers without removing them |
 | `make restart` | Restart all containers |
 
-### 4.2 Inspection
+### Inspection
 
 | Command | Description |
 |---|---|
 | `make ps` | Show container status |
 | `make secrets` | Check for secrets and create missing ones |
-| `make shell SERVICE=<name>` | Open a shell inside a running container |
+| `make shell SERVICE=<name>` | Open `/bin/sh` inside a running container |
 | `make config` | Print the resolved Compose configuration |
 
-### 4.3 Build & Cleanup
+### Build & Cleanup
 
 | Command | Description |
 |---|---|
-| `make build` | Rebuild images (uses the configured `.env` for build args) |
+| `make build` | Rebuild images (reads the configured `.env`) |
 | `make clean` | Remove containers and volumes |
 | `make fclean` | Full cleanup — containers, volumes, images, and host data directories |
 | `make re` | Full rebuild (`fclean` + `all`) |
 
 ---
 
-## 5. Data Persistence
+## Data Persistence
 
 | Volume Name | Container path | Host path |
 |---|---|---|

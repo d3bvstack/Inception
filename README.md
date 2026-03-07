@@ -1,5 +1,9 @@
 # Inception
 
+*This project has been created as part of the 42 curriculum by dbarba-v ([d3bvstack on github.com](https://github.com/d3bvstack/))*
+
+## Table of Contents
+
 - [Project Description](#project-description)
 - [Virtual Machines vs Docker](#virtual-machines-vs-docker)
 - [Docker Networks vs Host Network](#docker-networks-vs-host-network)
@@ -40,7 +44,7 @@ You could run this same NGINX, PHP, MariaDB stack inside a VM, and it would work
 
 Docker containers share the host kernel; Docker uses Linux primitives like namespaces for isolation (what the process can see), cgroups for resource limits, and a union filesystem for layered images to give each container its own isolated environment without duplicating the OS. The result of this approach is that containers start in seconds, use less memory, and the images stay small because they only carry the application and its immediate dependencies.
 
-For a project like this, where the goal is rapid iteration and reproducible environments, containers are the obvious fit. You can destroy the whole stack with one command and rebuild it from scratch in under a minute. Doing the same with VMs would be more time consumming and resource intensive.
+For a project like this, where the goal is rapid iteration and reproducible environments, containers are the obvious fit. You can destroy the whole stack with one command and rebuild it from scratch in under a minute. Doing the same with VMs would be more time consuming and resource intensive.
 
 [![General difference between VMs and Containers](.doc/vmVScontainer-d3bvstack.svg)](.doc/vmVScontainer-d3bvstack.png)
 
