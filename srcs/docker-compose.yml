@@ -37,9 +37,6 @@ services:
     build:
         context: ${WP_BUILD_CONTEXT}
         dockerfile: ${WP_DOCKERFILE}
-        args:
-          DOMAIN_NAME: ${DOMAIN_NAME}
-          PHP_FPM_VERSION: ${PHP_FPM_VERSION}
     image: ${WP_IMAGE_NAME}
     container_name: ${WP_CONTAINER_NAME}
     env_file:

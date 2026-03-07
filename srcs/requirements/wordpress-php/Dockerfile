@@ -1,8 +1,5 @@
 FROM debian:12
 
-ARG DOMAIN_NAME
-ARG PHP_FPM_VERSION
-
 LABEL org.opencontainers.image.authors=dbarba-v@student.42madrid.com
 
 RUN apt-get update \
