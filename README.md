@@ -128,12 +128,15 @@ The `Makefile` covers everything. Run `make help` to see the full list, but the 
 - [Multi-stage builds](https://docs.docker.com/build/building/multi-stage/) — Using multiple `FROM` statements to produce lean final images containing only runtime artifacts, not build toolchains.
 - [Dockerfile build best practices](https://docs.docker.com/build/building/best-practices/) — Best practices: base image selection, multi-stage builds, `ADD` vs `COPY`, cache-busting, and pinning image versions.
 - [RUN vs CMD vs ENTRYPOINT](https://www.docker.com/blog/docker-best-practices-choosing-between-run-cmd-and-entrypoint/) — When to use each instruction; shell vs exec form; PID 1 and container signal handling.
+- ▶️ [A Docker Tutorial for Beginners](https://www.youtube.com/watch?v=eGz9DS-aIeY) — Core Docker concepts: images vs containers, Docker Hub, and Dockerfile.
+- ▶️ [Docker Full Course](https://www.youtube.com/watch?v=AquOM-ISsnA&list=PLQhxXeq1oc2n7YnjRhq7qVMzZWtDY7Zz0) `spanish` — Comprehensive video playlist on Docker, from basic concepts to advanced configurations.
 
 ### Docker Compose
 
 - [Using secrets in Compose](https://docs.docker.com/compose/how-tos/use-secrets/) — How to define secret files, mount them at `/run/secrets/<name>`, and grant per-service access.
 - [Setting environment variables](https://docs.docker.com/compose/how-tos/environment-variables/set-environment-variables/) — How to use the `environment` attribute and `env_file` attribute in Compose.
 - [Environment variable best practices](https://docs.docker.com/compose/how-tos/environment-variables/best-practices/) — Keep secrets out of env vars; understand variable precedence and interpolation.
+- ▶️ [Docker Compose Tutorial](https://www.youtube.com/watch?v=bKFMS5C4CG0) — Getting started with multi-container orchestration using Docker Compose.
 
 ### Docker Security
 
@@ -141,12 +144,12 @@ The `Makefile` covers everything. Run `make help` to see the full list, but the 
 
 ### Networking
 
-- [Docker Networking Tutorial, ALL Network Types explained!](https://www.youtube.com/watch?v=5grbXvV_DSk) — Video covering all Docker network types: bridge, host, overlay, macvlan, and none.
+- ▶️ [Docker Networking Tutorial, ALL Network Types explained!](https://www.youtube.com/watch?v=5grbXvV_DSk) — Video covering all Docker network types: bridge, host, overlay, macvlan, and none.
 
 ### NGINX
 
 - [NGINX Beginner's Guide](https://nginx.org/en/docs/beginners_guide.html) — Start/stop/reload, configuration file structure (directives, contexts, blocks), static content serving, and reverse proxy setup.
-- [NGINX Explained — What is Nginx](https://www.youtube.com/watch?v=iInUBOVeBCc) — Introductory video on NGINX as a web server, reverse proxy, and load balancer.
+- ▶️ [NGINX Explained — What is Nginx](https://www.youtube.com/watch?v=iInUBOVeBCc) — Introductory video on NGINX as a web server, reverse proxy, and load balancer.
 - [NGINX Directory Structure (Debian)](https://wiki.debian.org/Nginx/DirectoryStructure) — Layout of `/etc/nginx/`: `nginx.conf`, `conf.d/`, `sites-available/`, `sites-enabled/`, `snippets/`, and param files.
 - [NGINX core module directives](https://nginx.org/en/docs/ngx_core_module.html) — Reference for core directives: `worker_processes`, `error_log`, `pid`, `events`, `user`, `include`, `load_module`.
 - [Installing NGINX Open Source](https://docs.nginx.com/nginx/admin-guide/installing-nginx/installing-nginx-open-source/) — Installation from OS packages, the official nginx repo, or from source.
@@ -155,6 +158,7 @@ The `Makefile` covers everything. Run `make help` to see the full list, but the 
 ### MariaDB
 
 - [Installing MariaDB Server](https://mariadb.com/docs/server/mariadb-quickstart-guides/installing-mariadb-server-guide) — Install guide for Linux (apt/dnf/yum), `mariadb-secure-installation`, and service verification with systemctl.
+- [MariaDB Connecting Guide](https://mariadb.com/docs/server/mariadb-quickstart-guides/mariadb-connecting-guide) — Official guide for connecting to MariaDB using various clients and tools.
 
 ### WordPress
 
@@ -164,6 +168,6 @@ The `Makefile` covers everything. Run `make help` to see the full list, but the 
 
 ### AI usage
 
-- Restructuring and styling documentation.
+- Restructuring and styling both `.md` documentation and code comments.
 - Fetching and summarising all linked resources to write accurate inline descriptions.
-- [Dockerdocs AI Assistant](https://www.docker.com/blog/docker-documentation-ai-powered-assistant/) for docker related queries.
+- Specialized [Dockerdocs AI Assistant](https://www.docker.com/blog/docker-documentation-ai-powered-assistant/) for docker related queries.
