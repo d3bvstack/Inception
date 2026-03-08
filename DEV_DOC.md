@@ -10,6 +10,16 @@
   - [Derived Image Names](#derived-image-names)
 - [Secrets](#secrets)
 - [Configuration Files](#configuration-files)
+- [Service Internals](#service-internals)
+  - [NGINX](#nginx)
+    - [How `nginx.conf` and `server.conf.tmpl` are used](#how-nginxconf-and-serverconftmpl-are-used)
+    - [What the NGINX entrypoint does](#what-the-nginx-entrypoint-does)
+  - [MariaDB](#mariadb)
+    - [How `my.cnf.tmpl` is used](#how-mycnftmpl-is-used)
+    - [What the MariaDB entrypoint does](#what-the-mariadb-entrypoint-does)
+  - [WordPress + PHP-FPM](#wordpress--php-fpm)
+    - [How `php-fpm.conf.tmpl` is used](#how-php-fpmconftmpl-is-used)
+    - [What the WordPress + PHP-FPM entrypoint does](#what-the-wordpress--php-fpm-entrypoint-does)
 - [Make Commands](#make-commands)
   - [Lifecycle](#lifecycle)
   - [Inspection](#inspection)
@@ -174,8 +184,97 @@ secrets/
 |---|---|
 | NGINX | `srcs/requirements/nginx/conf/nginx.conf` |
 | NGINX (vhost) | `srcs/requirements/nginx/conf/server.conf.tmpl` |
-| PHP-FPM | `srcs/requirements/wordpress-php/conf/php-fpm.conf` |
+| PHP-FPM | `srcs/requirements/wordpress-php/conf/php-fpm.conf.tmpl` |
 | MariaDB | `srcs/requirements/mariadb/conf/my.cnf.tmpl` |
+
+---
+
+## Service Internals
+
+### NGINX
+
+#### How `nginx.conf` and `server.conf.tmpl` are used
+
+`nginx.conf` is the global NGINX configuration. It is copied by the entrypoint from the build-context path `/nginx-docker/conf/nginx.conf` to `/etc/nginx/nginx.conf`. It configures worker processes, events management, global TLS policy (TLS versions, available ciphers and SSL session cache), and it also adds the `include /etc/nginx/conf.d/*.conf`, which loads virtual host configs. It also sets `daemon off` so NGINX runs in the foreground and keeps the container alive.
+
+`server.conf.tmpl` is a virtual host template. The entrypoint processes it with `envsubst`, substituting a list of variables:
+
+```
+${DOMAIN_NAME} ${NGINX_LISTEN_PORT} ${NGINX_HOST_PORT}
+${CERT_NAME} ${KEY_NAME} ${CERT_PATH} ${KEY_PATH}
+${WEB_DATA} ${WP_CONTAINER_NAME} ${PHPFPM_HOST} ${PHPFPM_LISTEN_PORT}
+```
+
+The new file with expanded variables is written to `/etc/nginx/conf.d/${DOMAIN_NAME}.conf` and the template is removed. The resulting vhost config:
+
+- Rejects unknown hostnames with HTTP 444.
+- Redirects all port 80 traffic to HTTPS port 443.
+- Terminates TLS and serves WordPress files from `${WEB_DATA}/${DOMAIN_NAME}`.
+- Forwards `*.php` requests to PHP-FPM on `${PHPFPM_HOST}:${PHPFPM_LISTEN_PORT}`.
+- Adds OWASP-recommended security headers (`X-Frame-Options`, `X-Content-Type-Options`, CSP, etc.).
+- Caches static assets in the browser for 180 days.
+- Denies access to hidden files and PHP execution inside upload directories.
+
+#### What the NGINX entrypoint does
+
+`tools/setup.sh` runs once at container start and then `exec`s NGINX:
+
+1. Moves `nginx.conf` from `/nginx-docker/conf/nginx.conf` → `/etc/nginx/nginx.conf`.
+2. Runs `envsubst` on `server.conf.tmpl` with the explicit variable list and writes the result to `/etc/nginx/conf.d/${DOMAIN_NAME}.conf`. Removes the template afterwards.
+3. On restart (template no longer present): verifies the config file exists and continues.
+4. Validates the full NGINX configuration with `nginx -t`; exits non-zero on failure.
+5. `exec /usr/sbin/nginx` replaces the shell process with NGINX.
+
+---
+
+### MariaDB
+
+#### How `my.cnf.tmpl` is used
+
+`my.cnf.tmpl` is a MariaDB config file template that configures the `[mysqld]` section: datadir, InnoDB engine settings, character set, collation, bind address, and port. The entrypoint substitutes the three environment-specific variables — `${MDB_CHARSET}`, `${MDB_COLLATION}`, and `${MDB_ENGINE_PORT}` — with `envsubst` and writes the result to `/etc/mysql/mariadb.conf.d/99-custom.cnf`. MariaDB automatically loads all `.cnf` files from that directory and the `99-` prefix ensures these settings apply last and override any defaults.
+
+#### What the MariaDB entrypoint does
+
+`tools/setup.sh` configures the database on first start and `exec` `mariadbd` for subsequent runs:
+
+1. Reads secrets from `/run/secrets/mysql_root_password` and `/run/secrets/mysql_wp_db_admin_password`.
+2. Processes `my.cnf.tmpl` → `/etc/mysql/mariadb.conf.d/99-custom.cnf`; on restart the template is gone but the rendered file already exists.
+3. **First boot only**: runs `mariadb-install-db` to initialize the data directory at `/var/lib/mysql`.
+4. Starts a temporary `mariadbd` instance with `--skip-networking` (no external connections accepted) in the background.
+5. Polls `mysqladmin ping` every second for up to 60 s; aborts if the server never becomes reachable.
+6. **Secures the install** (idempotent `ALTER USER`, so safe on restarts):
+   - Sets the `root@localhost` password.
+   - Drops anonymous users and the `test` database.
+   - `FLUSH PRIVILEGES`.
+7. Creates the WordPress database (`CREATE DATABASE IF NOT EXISTS`) and the DB admin user (`CREATE USER IF NOT EXISTS`) with `GRANT ALL PRIVILEGES` on that database.
+8. Shuts down the temporary instance cleanly with `mysqladmin shutdown`.
+9. `exec /usr/sbin/mariadbd --user=mysql --datadir=/var/lib/mysql` — replaces the shell with the real, network-facing server (PID 1).
+
+---
+
+### WordPress + PHP-FPM
+
+#### How `php-fpm.conf.tmpl` is used
+
+`php-fpm.conf.tmpl` is the main PHP-FPM configuration template. It defines the global FPM options and the `[www]` worker pool. The only variable substituted is `${PHPFPM_LISTEN_PORT}`, which sets the TCP address the pool listens on (`0.0.0.0:${PHPFPM_LISTEN_PORT}`), making the pool reachable by the NGINX container over the frontend network. The entrypoint renders the template with `envsubst '\${PHPFPM_LISTEN_PORT}'` and writes the result to `/etc/php/${PHP_FPM_VERSION}/fpm/php-fpm.conf`, replacing the distro-supplied default.
+
+#### What the WordPress + PHP-FPM entrypoint does
+
+`tools/setup.sh` installs and configures WordPress, then `exec`s PHP-FPM:
+
+1. Reads secrets from `/run/secrets/` (DB admin password, WP admin password, WP user password).
+2. Processes `php-fpm.conf.tmpl` → `/etc/php/${PHP_FPM_VERSION}/fpm/php-fpm.conf`; exits non-zero if the template is missing.
+3. Installs **WP-CLI** (`wp`) into `/usr/local/bin/wp` if not already present.
+4. **First boot only**: downloads WordPress core files with `wp core download --skip-content` at the configured version.
+5. **First boot only**:
+   - Generates `wp-config.php` with DB credentials read from secrets.
+   - Runs `wp core install` (sets site URL, title, admin account).
+   - Updates all plugins.
+   - Creates the secondary WordPress user with the configured role.
+   - Installs and activates the `twentytwentythree` theme.
+   - Creates a static front page and sets it as the homepage.
+6. Sets ownership of `${WP_WEBROOT}` to `www-data:www-data`.
+7. `exec php-fpm${PHP_FPM_VERSION} -F` — replaces the shell with PHP-FPM running in the foreground (PID 1). Falls back to `php-fpm` if the versioned executable is not found.
 
 ---
 
