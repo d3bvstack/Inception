@@ -37,6 +37,8 @@ services:
     build:
         context: ${WP_BUILD_CONTEXT}
         dockerfile: ${WP_DOCKERFILE}
+        args:
+          WP_WEBROOT: ${WP_WEBROOT}
     image: ${WP_IMAGE_NAME}
     container_name: ${WP_CONTAINER_NAME}
     env_file:

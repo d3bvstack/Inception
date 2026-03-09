@@ -82,14 +82,7 @@ main() {
 		echo "wp-config.php already present, skipping configuration and install"
 	fi
 
-	# Ensure correct permission
-	chown -R "$WWW_USER":"$WWW_GROUP" "$WP_WEBROOT"
-	find "$WP_WEBROOT" -type d -exec chmod 755 {} +
-	find "$WP_WEBROOT" -type f -exec chmod 644 {} +
-
-	echo "WordPress setup complete"
 }
-
 
 main "$@"
 

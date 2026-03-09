@@ -37,11 +37,6 @@ else
     echo "MariaDB data directory already exists, skipping mariadb-install-db"
 fi
 
-
-# Ensure MariaDB log directory exists so mariadbd can create mariadb.log
-mkdir -p /var/log/mariadb
-chown -R mysql:mysql /var/log/mariadb
-
 # Start server with mysql server and no networking on background and save process id
 /usr/sbin/mariadbd \
     --user=mysql \

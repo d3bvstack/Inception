@@ -1,4 +1,5 @@
 FROM debian:12
+ARG WP_WEBROOT
 
 LABEL org.opencontainers.image.authors=dbarba-v@student.42madrid.com
 
@@ -24,8 +25,8 @@ RUN apt-get update \
 		netcat-openbsd \
 	&& rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /var/www \
-	&& chown -R www-data:www-data /var/www
+RUN mkdir -p /var/www ${WP_WEBROOT} \
+	&& chown -R www-data:www-data /var/www ${WP_WEBROOT}
 
 WORKDIR /wordpress-php-docker
 

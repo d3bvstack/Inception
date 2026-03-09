@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	gettext-base \
 	&& rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /run/mysqld /var/lib/mysql \
+RUN mkdir -p /run/mysqld /var/lib/mysql /var/log/mariadb \
 	&& chown -R mysql:mysql /run/mysqld /var/lib/mysql /etc/mysql/mariadb.conf.d/ /var/log/
 
 WORKDIR /mariadb-docker
