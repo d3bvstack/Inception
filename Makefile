@@ -6,7 +6,7 @@
 #    By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/23 09:42:26 by dbarba-v          #+#    #+#              #
-#    Updated: 2026/03/07 14:50:24 by dbarba-v         ###   ########.fr        #
+#    Updated: 2026/03/09 14:58:00 by dbarba-v         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -85,6 +85,7 @@ fclean:
 	  debian:12 sh -c "rm -rf /mnt/wp/* /mnt/db/*"
 	@rm -rf "/home/$$USER/data/wordpress"
 	@rm -rf "/home/$$USER/data/mariadb"
+	@rm -rf "/home/$$USER/data"
 	$(FCLEAN)
 
 re: fclean all
