@@ -80,12 +80,9 @@ clean:
 
 fclean:
 	@docker run --rm \
-	  -v "/home/$$USER/data/wordpress:/mnt/wp" \
-	  -v "/home/$$USER/data/mariadb:/mnt/db" \
-	  debian:12 sh -c "rm -rf /mnt/wp/* /mnt/db/*"
-	@sudo rm -rf "/home/$$USER/data/wordpress"
-	@sudo rm -rf "/home/$$USER/data/mariadb"
-	@sudo rm -rf "/home/$$USER/data"
+	  -v "/home/$$USER/data:/mnt/data" \
+	  debian:12 sh -c "rm -rf /mnt/data/mariadb /mnt/data/wordpress"
+	@ rm -rf /home/$$USER/data
 	$(FCLEAN)
 
 re: fclean all
