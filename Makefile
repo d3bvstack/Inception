@@ -83,9 +83,9 @@ fclean:
 	  -v "/home/$$USER/data/wordpress:/mnt/wp" \
 	  -v "/home/$$USER/data/mariadb:/mnt/db" \
 	  debian:12 sh -c "rm -rf /mnt/wp/* /mnt/db/*"
-	@rm -rf "/home/$$USER/data/wordpress"
-	@rm -rf "/home/$$USER/data/mariadb"
-	@rm -rf "/home/$$USER/data"
+	@sudo rm -rf "/home/$$USER/data/wordpress"
+	@sudo rm -rf "/home/$$USER/data/mariadb"
+	@sudo rm -rf "/home/$$USER/data"
 	$(FCLEAN)
 
 re: fclean all
