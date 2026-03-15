@@ -87,7 +87,7 @@ Two Docker networks isolate traffic between services.
 | `MDB_IMAGE_TAG` | Image tag |
 | `MDB_CONTAINER_NAME` | Container name |
 | `MDB_CONFIG_ENV` | Path to the service config env-file |
-| `MDB_ADMIN` | MariaDB admin username |
+| `MDB_ADMIN` | MariaDB admin username (**managed as a secret**)|
 | `MDB_CHARSET` | Default character set |
 | `MDB_COLLATION` | Default collation |
 | `MDB_ENGINE_PORT` | MariaDB engine port (default `3306`) |
@@ -103,7 +103,7 @@ Two Docker networks isolate traffic between services.
 | `WP_CONTAINER_NAME` | Container name |
 | `WP_CONFIG_ENV` | Path to the service config env-file |
 | `WP_DB_NAME` | WordPress database name |
-| `WP_DB_ADMIN` | MariaDB user with privileges on the WordPress DB |
+| `WP_DB_ADMIN` | MariaDB user with privileges on the WordPress DB (**managed as a secret**)|
 | `WP_DB_CHARSET` | WordPress database character set |
 | `WP_DB_COLLATION` | WordPress database collation |
 | `PHPFPM_LISTEN_PORT` | PHP-FPM listener port (default `9000`) |
@@ -112,11 +112,11 @@ Two Docker networks isolate traffic between services.
 | `DB_NAME` | Database name WordPress connects to |
 | `DB_USER` | Database user WordPress connects as |
 | `WP_VERSION` | WordPress version to install |
-| `WP_ADMIN` | WordPress administrator username |
-| `WP_ADMIN_MAIL` | Administrator email address |
-| `WP_USER` | Additional WordPress user username |
+| `WP_ADMIN` | WordPress administrator username (**managed as a secret**) |
+| `WP_ADMIN_MAIL` | Administrator email address (**managed as a secret**) |
+| `WP_USER` | Additional WordPress user username (**managed as a secret**)|
 | `WP_USER_ROLE` | Role for the additional user |
-| `WP_USER_MAIL` | Email address for the additional user |
+| `WP_USER_MAIL` | Email address for the additional user (**managed as a secret**) |
 | `WP_WEBROOT` | Web root path inside the container |
 
 **NGINX**
@@ -161,16 +161,21 @@ These variables are composed from the repo and tag variables above and do not ne
 
 ## Secrets
 
-Secret values are read from files and are **not** stored in `.env`. Create the following files before the first build:
+Secret values (including usernames, emails, and passwords) are read from files and are **not** stored in `.env`. Create the following files before the first build:
 
 ```
 secrets/
 ├── mariadb/
 │   ├── mysql_root_password.secret         # mysql_root_password secret
-│   └── mysql_wp_db_admin_password.secret  # mysql_wp_db_admin_password secret
+│   ├── mysql_wp_db_admin_password.secret  # mysql_wp_db_admin_password secret
+│   └── mysql_wp_db_admin_username.secret  # mysql_wp_db_admin_username secret
 ├── wordpress-php/
 │   ├── wp_admin_password.secret           # wp_admin_password secret
-│   └── wp_user_password.secret            # wp_user_password secret
+│   ├── wp_admin_username.secret           # wp_admin_username secret
+│   ├── wp_admin_mail.secret               # wp_admin_mail secret
+│   ├── wp_user_password.secret            # wp_user_password secret
+│   ├── wp_user_username.secret            # wp_user_username secret
+│   └── wp_user_mail.secret                # wp_user_mail secret
 └── ssl/
     ├── dbarba-v.42.fr.cert                # SSL certificate secret
     └── dbarba-v.42.fr.key                 # SSL private key secret

@@ -10,6 +10,10 @@ WWW_GROUP="${WWW_GROUP:-$WWW_USER}"
 DB_PASS=$(cat /run/secrets/mysql_wp_db_admin_password)
 ADMIN_PASS=$(cat /run/secrets/wp_admin_password)
 WP_USER_PASS=$(cat /run/secrets/wp_user_password)
+WP_ADMIN=$(cat /run/secrets/wp_admin_username)
+WP_USER=$(cat /run/secrets/wp_user_username)
+WP_ADMIN_MAIL=$(cat /run/secrets/wp_admin_mail)
+WP_USER_MAIL=$(cat /run/secrets/wp_user_mail)
 
 # Apply templated php-fpm.conf if present
 PHP_FPM_CONF="/wordpress-php-docker/conf/php-fpm.conf.tmpl"

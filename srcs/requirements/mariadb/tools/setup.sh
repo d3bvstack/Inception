@@ -6,9 +6,9 @@ TEMPLATE=/mariadb-docker/conf/my.cnf.tmpl
 TARGET_DIR=/etc/mysql/mariadb.conf.d
 TARGET_CONF="$TARGET_DIR/99-custom.cnf"
 
-# Source secrets
 MYSQL_ROOT_PASSWORD=$(cat /run/secrets/mysql_root_password)
 WP_DB_ADMIN_PASSWORD=$(cat /run/secrets/mysql_wp_db_admin_password)
+WP_DB_ADMIN=$(cat /run/secrets/mysql_wp_db_admin_username)
 
 # env substitution from my.cnf.tmpl to my.cnf
 if [ -f "$TEMPLATE" ]; then

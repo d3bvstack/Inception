@@ -1,11 +1,17 @@
 #!/bin/sh
 set -eu
 
+
 CRED_SECRETS="
 secrets/wordpress-php/wp_admin_password.secret
+secrets/wordpress-php/wp_admin_username.secret
+secrets/wordpress-php/wp_admin_mail.secret
 secrets/wordpress-php/wp_user_password.secret
+secrets/wordpress-php/wp_user_username.secret
+secrets/wordpress-php/wp_user_mail.secret
 secrets/mariadb/mysql_root_password.secret
 secrets/mariadb/mysql_wp_db_admin_password.secret
+secrets/mariadb/mysql_wp_db_admin_username.secret
 "
 
 for file in $CRED_SECRETS; do
@@ -15,7 +21,10 @@ for file in $CRED_SECRETS; do
   { [ -r /dev/tty ] && [ -w /dev/tty ]; } || { printf "Error: missing %s and no TTY to prompt for value.\n" "$file" >&2; exit 1; }
 
   mkdir -p "$(dirname "$file")"
-  printf "Enter value for %s: " "$file" >/dev/tty
+  prompt_name=$(basename "$file")
+  prompt_name=${prompt_name%.secret}
+  prompt_display=$(printf "%s" "$prompt_name" | tr '_' ' ')
+  printf "Enter value for %s: " "$prompt_display" >/dev/tty
   stty -echo </dev/tty 2>/dev/null || true
   IFS= read -r val </dev/tty
   stty echo </dev/tty 2>/dev/null || true

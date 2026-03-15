@@ -72,16 +72,21 @@ make
 
 ## Secrets
 
-Secret values are stored as plain-text files under `secrets/`:
+Secret values (including usernames, emails, and passwords) are stored as plain-text files under `secrets/`:
 
 ```
 secrets/
 ├── mariadb/
 │   ├── mysql_root_password.secret         # mysql_root_password secret
-│   └── mysql_wp_db_admin_password.secret  # mysql_wp_db_admin_password secret
+│   ├── mysql_wp_db_admin_password.secret  # mysql_wp_db_admin_password secret
+│   └── mysql_wp_db_admin_username.secret  # mysql_wp_db_admin_username secret
 ├── wordpress-php/
 │   ├── wp_admin_password.secret           # wp_admin_password secret
-│   └── wp_user_password.secret            # wp_user_password secret
+│   ├── wp_admin_username.secret           # wp_admin_username secret
+│   ├── wp_admin_mail.secret               # wp_admin_mail secret
+│   ├── wp_user_password.secret            # wp_user_password secret
+│   ├── wp_user_username.secret            # wp_user_username secret
+│   └── wp_user_mail.secret                # wp_user_mail secret
 └── ssl/
     ├── dbarba-v.42.fr.cert                # SSL certificate secret
     └── dbarba-v.42.fr.key                 # SSL private key secret
