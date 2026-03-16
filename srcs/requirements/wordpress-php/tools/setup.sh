@@ -6,6 +6,7 @@ WP_CMD="/usr/local/bin/wp"
 WWW_USER="${WWW_USER:-www-data}"
 WWW_GROUP="${WWW_GROUP:-$WWW_USER}"
 
+DB_ADMIN=$(cat /run/secrets/mysql_wp_db_admin_username)
 DB_PASS=$(cat /run/secrets/mysql_wp_db_admin_password)
 ADMIN_PASS=$(cat /run/secrets/wp_admin_password)
 WP_USER_PASS=$(cat /run/secrets/wp_user_password)

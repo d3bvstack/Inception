@@ -6,6 +6,7 @@ set -euo pipefail
 #  - the WordPress database exists
 #  - the WordPress DB admin user can connect to that database
 
+WP_DB_ADMIN=$(cat /run/secrets/mysql_wp_db_admin_username)
 MYSQL_ROOT_PASSWORD=$(cat /run/secrets/mysql_root_password)
 MYSQL_WP_PASSWORD=$(cat /run/secrets/mysql_wp_db_admin_password)
 
