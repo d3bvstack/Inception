@@ -15,6 +15,7 @@ services:
     secrets:
       - mysql_root_password
       - mysql_wp_db_admin_password
+      - mysql_wp_db_admin_username
     restart: always
     networks:
       backend_net:
@@ -45,8 +46,13 @@ services:
       - ${WP_CONFIG_ENV}
     secrets:
       - mysql_wp_db_admin_password
+      - mysql_wp_db_admin_username
       - wp_admin_password
       - wp_user_password
+      - wp_admin_username
+      - wp_user_username
+      - wp_admin_mail
+      - wp_user_mail
     networks:
       frontend_net:
         ipv4_address: ${NETWORK_FRONTEND_PHPFPM_IP}

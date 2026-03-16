@@ -6,8 +6,8 @@ set -euo pipefail
 #  - the WordPress database exists
 #  - the WordPress DB admin user can connect to that database
 
-MYSQL_ROOT_PASSWORD=$(cat "/run/secrets/mysql_root_password")
-MYSQL_WP_PASSWORD=$(cat "/run/secrets/mysql_wp_db_admin_password")
+MYSQL_ROOT_PASSWORD=$(cat /run/secrets/mysql_root_password)
+MYSQL_WP_PASSWORD=$(cat /run/secrets/mysql_wp_db_admin_password)
 
 if [ -z "$WP_DB_NAME" ] || [ -z "$WP_DB_ADMIN" ]; then
     echo "Environment variables WP_DB_NAME and WP_DB_ADMIN must be set." >&2
