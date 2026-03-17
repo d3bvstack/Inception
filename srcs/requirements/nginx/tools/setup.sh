@@ -9,6 +9,8 @@ if [ -f "$NGINX_CONF" ]; then
     echo "Nginx config file \"$NGINX_CONF\" found"
     echo "Moving to \"$NGINX_CONF_TARGET\""
     mv -f $NGINX_CONF $NGINX_CONF_TARGET
+elif [ -f "$NGINX_CONF_TARGET" ]; then
+    echo "Using config at $NGINX_CONF_TARGET"
 else
     echo "ERROR: No existing Nginx config at $NGINX_CONF"
     exit 1

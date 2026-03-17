@@ -30,7 +30,6 @@ for file in $CRED_SECRETS; do
   stty echo </dev/tty 2>/dev/null || true
   printf "\n" >/dev/tty
   printf '%s' "$val" >"$file"
-  chmod 0400 "$file" 2>/dev/null || true
   printf "Created %s\n" "$file" >&2
 done
 
