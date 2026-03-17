@@ -6,7 +6,7 @@
 #    By: dbarba-v <dbarba-v@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/23 09:42:26 by dbarba-v          #+#    #+#              #
-#    Updated: 2026/03/09 14:58:00 by dbarba-v         ###   ########.fr        #
+#    Updated: 2026/03/17 10:35:49 by dbarba-v         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -76,13 +76,13 @@ config:
 	$(CONFIG)
 
 clean:
-	$(CLEAN)
-
-fclean:
 	@docker run --rm \
 	  -v "/home/$$USER/data:/mnt/data" \
 	  debian:12 sh -c "rm -rf /mnt/data/mariadb /mnt/data/wordpress"
 	@ rm -rf /home/$$USER/data
+	$(CLEAN)
+
+fclean: clean
 	$(FCLEAN)
 
 re: fclean all

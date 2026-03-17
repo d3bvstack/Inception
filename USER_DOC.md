@@ -52,7 +52,7 @@ make
 | `make shell SERVICE=<name>` | Open `/bin/sh` inside a running container |
 | `make config` | Print the resolved Compose configuration |
 | `make secrets` | Check for secrets and create missing ones |
-| `make clean` | Remove containers and volumes |
+| `make clean` | Remove containers, volumes and host data directories |
 | `make fclean` | Full cleanup — containers, volumes, images, and host data directories |
 | `make re` | Full rebuild (`fclean` + `all`) |
 

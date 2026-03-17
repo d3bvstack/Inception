@@ -112,8 +112,8 @@ The `Makefile` covers everything. Run `make help` to see the full list, but the 
 | `make shell SERVICE=<name>` | Open `/bin/sh` inside a running container |
 | `make config` | Print the resolved Compose configuration (good for debugging) |
 | `make secrets` | Check for secrets and create missing ones |
-| `make clean` | Remove containers and volumes |
-| `make fclean` | Full cleanup — containers, volumes, images, and host data directories |
+| `make clean` | Remove containers, volumes and host data directories |
+| `make fclean` | Full cleanup — containers, volumes, images and host data directories |
 | `make re` | Full rebuild (`fclean` + `all`) |
 
 ---

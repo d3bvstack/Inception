@@ -308,8 +308,8 @@ The new file with expanded variables is written to `/etc/nginx/conf.d/${DOMAIN_N
 | Command | Description |
 |---|---|
 | `make build` | Rebuild images (reads the configured `.env`) |
-| `make clean` | Remove containers and volumes |
-| `make fclean` | Full cleanup — containers, volumes, images, and host data directories |
+| `make clean` | Remove containers, volumes and host data directories  |
+| `make fclean` | Full cleanup — containers, volumes, images and host data directories |
 | `make re` | Full rebuild (`fclean` + `all`) |
 
 ---

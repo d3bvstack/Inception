@@ -3,15 +3,15 @@ set -eu
 
 
 CRED_SECRETS="
-secrets/wordpress-php/wp_admin_password.secret
 secrets/wordpress-php/wp_admin_username.secret
 secrets/wordpress-php/wp_admin_mail.secret
-secrets/wordpress-php/wp_user_password.secret
+secrets/wordpress-php/wp_admin_password.secret
 secrets/wordpress-php/wp_user_username.secret
 secrets/wordpress-php/wp_user_mail.secret
-secrets/mariadb/mysql_root_password.secret
-secrets/mariadb/mysql_wp_db_admin_password.secret
+secrets/wordpress-php/wp_user_password.secret
 secrets/mariadb/mysql_wp_db_admin_username.secret
+secrets/mariadb/mysql_wp_db_admin_password.secret
+secrets/mariadb/mysql_root_password.secret
 "
 
 for file in $CRED_SECRETS; do
