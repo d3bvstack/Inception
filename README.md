@@ -14,6 +14,11 @@ The stack is intentionally segmented by network into front and back-end networks
 
 [![Inception architecture overview](.doc/InceptionOverview-d3bvstack.svg)](.doc/InceptionOverview-d3bvstack.png)
 
+## Documentation
+
+- [DEV_DOC](DEV_DOC.md): Technical developer documentation covering architecture, build flow, and internal implementation details.
+- [USER_DOC](USER_DOC.md): End-user guide for setup, operation, and day-to-day usage of the project.
+
 ## Project Goal
 
 The objective is to deploy and operate a realistic web platform while applying container best practices:
@@ -26,6 +31,7 @@ The objective is to deploy and operate a realistic web platform while applying c
 
 ## Table of contents
 
+- [Documentation](#documentation)
 - [Architecture Overview](#architecture-overview)
 - [Project Description](#project-description)
 - [Virtual Machines vs Docker](#virtual-machines-vs-docker)
