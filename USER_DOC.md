@@ -1,109 +1,123 @@
 # User Documentation
 
+Practical guide for running and using the Inception stack.
+
 ## Table of Contents
 
 - [Overview](#overview)
-- [Getting Started](#getting-started)
-	- [Start the infrastructure](#start-the-infrastructure)
-	- [Commands](#commands)
-- [Accessing the Site](#accessing-the-site)
+- [Quick Start](#quick-start)
+- [Daily Commands](#daily-commands)
+- [Access the Site](#access-the-site)
 - [Secrets](#secrets)
-- [Verifying the Infrastructure](#verifying-the-infrastructure)
+- [Verify the Stack](#verify-the-stack)
+- [Troubleshooting Notes](#troubleshooting-notes)
 
 ## Overview
 
-This infrastructure runs a WordPress site backed by the following services:
+This project runs a WordPress website with three services:
 
 | Service | Role |
 |---|---|
-| NGINX | Reverse proxy |
-| WordPress + PHP-FPM | CMS, PHP runtime |
-| MariaDB | MySQL database |
+| NGINX | HTTPS reverse proxy |
+| WordPress + PHP-FPM | CMS and PHP runtime |
+| MariaDB | Database backend |
 
----
+## Quick Start
 
-## Getting Started
+1. Add these host entries:
 
-> Add the following entries to `/etc/hosts`:
->
-> `127.0.0.1     dbarba-v.42.fr`
-> `127.0.0.1     www.dbarba-v.42.fr`
+```text
+127.0.0.1     dbarba-v.42.fr
+127.0.0.1     www.dbarba-v.42.fr
+```
 
-### Start the infrastructure
+2. Start the infrastructure:
 
 ```sh
 make
 ```
 
-> Aliases: `make inception`, `make all`, or `make up`
+Equivalent commands:
 
-> The Makefile runs a small helper that will prompt for any missing secret files (created under `secrets/`) when starting the stack.
+- `make inception`
+- `make all`
+- `make up`
 
-### Commands
+When required secret files are missing, the Makefile helper prompts you to create them.
+
+## Daily Commands
 
 | Command | Description |
 |---|---|
 | `make` / `make inception` / `make all` / `make up` | Start all containers in detached mode |
-| `make build` | Rebuild images (reads the configured `.env`) |
-| `make down` | Stop and remove containers and networks (keeps volumes) |
+| `make build` | Rebuild images from the configured `.env` |
+| `make down` | Stop and remove containers and networks (volumes kept) |
 | `make stop` | Stop running containers without removing them |
 | `make restart` | Restart all containers |
-| `make ps` | Show container status |
+| `make ps` | Show service/container status |
 | `make shell SERVICE=<name>` | Open `/bin/sh` inside a running container |
-| `make config` | Print the resolved Compose configuration |
-| `make secrets` | Check for secrets and create missing ones |
-| `make clean` | Remove containers, volumes and host data directories |
-| `make fclean` | Full cleanup — containers, volumes, images, and host data directories |
-| `make re` | Full rebuild (`fclean` + `all`) |
+| `make config` | Print resolved Docker Compose configuration |
+| `make secrets` | Verify/create missing secret files |
+| `make clean` | Remove containers, volumes, and host data directories |
+| `make fclean` | Full cleanup: containers, volumes, images, and host data directories |
+| `make re` | Rebuild from scratch (`fclean` + `all`) |
 
----
+## Access the Site
 
-## Accessing the Site
-
-> The following URLs are valid only if the project is running on the default VM.
+These URLs are valid when running on the default VM setup:
 
 | URL | Description |
 |---|---|
-| `https://dbarba-v.42.fr` | Main site |
-| `https://dbarba-v.42.fr/wp-admin` | WordPress admin panel |
+| `https://dbarba-v.42.fr` | Main website |
+| `https://dbarba-v.42.fr/wp-admin` | WordPress admin dashboard |
 | `https://dbarba-v.42.fr/wp-login.php` | WordPress login page |
-
----
 
 ## Secrets
 
-Secret values (including usernames, emails, and passwords) are stored as plain-text files under `secrets/`:
+Secrets are stored as plain-text files under `secrets/`.
 
-```
+```text
 secrets/
 ├── mariadb/
-│   ├── mysql_root_password.secret         # mysql_root_password secret
-│   ├── mysql_wp_db_admin_password.secret  # mysql_wp_db_admin_password secret
-│   └── mysql_wp_db_admin_username.secret  # mysql_wp_db_admin_username secret
+│   ├── mysql_root_password.secret
+│   ├── mysql_wp_db_admin_password.secret
+│   └── mysql_wp_db_admin_username.secret
 ├── wordpress-php/
-│   ├── wp_admin_password.secret           # wp_admin_password secret
-│   ├── wp_admin_username.secret           # wp_admin_username secret
-│   ├── wp_admin_mail.secret               # wp_admin_mail secret
-│   ├── wp_user_password.secret            # wp_user_password secret
-│   ├── wp_user_username.secret            # wp_user_username secret
-│   └── wp_user_mail.secret                # wp_user_mail secret
+│   ├── wp_admin_password.secret
+│   ├── wp_admin_username.secret
+│   ├── wp_admin_mail.secret
+│   ├── wp_user_password.secret
+│   ├── wp_user_username.secret
+│   └── wp_user_mail.secret
 └── ssl/
-    ├── dbarba-v.42.fr.cert                # SSL certificate secret
-    └── dbarba-v.42.fr.key                 # SSL private key secret
+    ├── dbarba-v.42.fr.cert
+    └── dbarba-v.42.fr.key
 ```
 
-Each file must contain only the secret value (no trailing newline).
+Rules:
 
-If a file is missing, `make` prompts interactively for its value. If in non-interactive environments (no TTY) the check will fail; create the files beforehand.
+- Each file contains only the secret value.
+- Do not add trailing newline characters.
+- Do not commit secret files to source control.
 
----
+If you run in a non-interactive environment (no TTY), `make` cannot prompt for missing values. Create all secret files beforehand.
 
-## Verifying the Infrastructure
+## Verify the Stack
 
-Check that all services are running:
+Check that all services are up:
 
 ```sh
 make ps
-# or
+```
+
+Alternative direct command:
+
+```sh
 docker compose -f ./srcs/docker-compose.yml ps
 ```
+
+## Troubleshooting Notes
+
+- Site is not reachable: confirm `/etc/hosts` has both domain entries and verify service state with `make ps`.
+- `make` fails due to missing secrets: run `make secrets` or create files manually in `secrets/`.
+- Changes to Dockerfiles or templates are not applied: run `make build` or force a clean rebuild with `make re`.
