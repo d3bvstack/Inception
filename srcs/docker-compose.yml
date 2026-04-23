@@ -91,6 +91,7 @@ services:
       - ssl_key
       - ssl_cert
     ports:
+      - "80:80"
       - "${NGINX_HOST_PORT}:${NGINX_LISTEN_PORT}"
     networks:
       frontend_net:
