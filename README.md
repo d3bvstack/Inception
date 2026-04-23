@@ -1,161 +1,425 @@
-# Inception
-
 *This project has been created as part of the 42 curriculum by dbarba-v ([d3bvstack on github.com](https://github.com/d3bvstack/))*
 
-## Table of Contents
+# Inception
 
+Containerized WordPress infrastructure for the 42 Inception project.
+
+This repository builds a three-service stack with Docker Compose:
+
+- NGINX as the only public entrypoint (HTTP + HTTPS)
+- WordPress + PHP-FPM as the application runtime
+- MariaDB as the database backend
+
+The stack is intentionally segmented by network into front and back-end networks, data persists on the host via volumes, and keeps credentials like passwords, logins and certificates in Docker secrets.
+
+[![Inception architecture overview](.doc/InceptionOverview-d3bvstack.svg)](.doc/InceptionOverview-d3bvstack.png)
+
+## Project Goal
+
+The objective is to deploy and operate a realistic web platform while applying container best practices:
+
+- Each service should do one thing only.
+- Docker images build exactly the same way every time.
+- Compose file clearly maps out how everything connects.
+- Keep settings and passwords separate from the app code.
+- Data persists after the container stops.
+
+## Table of contents
+
+- [Architecture Overview](#architecture-overview)
 - [Project Description](#project-description)
 - [Virtual Machines vs Docker](#virtual-machines-vs-docker)
 - [Docker Networks vs Host Network](#docker-networks-vs-host-network)
 - [Docker Secrets vs Environment Variables](#docker-secrets-vs-environment-variables)
 - [Docker Volumes vs Bind Mounts](#docker-volumes-vs-bind-mounts)
-- [Instructions](#instructions)
-	- [Prerequisites](#prerequisites)
-	- [Running the stack](#running-the-stack)
-- [Resources](#resources)
-	- [Docker Core](#docker-core)
-	- [Docker Compose](#docker-compose)
-	- [Docker Security](#docker-security)
-	- [Networking](#networking)
-	- [NGINX](#nginx)
-	- [MariaDB](#mariadb)
-	- [WordPress](#wordpress)
-	- [AI usage](#ai-usage)
+- [Quick start](#quick-start)
+- [Operational commands](#operational-commands)
+- [Configuration model](#configuration-model)
+- [Secrets model](#secrets-model)
+- [Persistence model](#persistence-model)
+- [Networking model](#networking-model)
+- [Request flow](#request-flow)
+- [Troubleshooting](#troubleshooting)
+- [Repository map](#repository-map)
+- [Learning resources](#learning-resources)
 
-## Project Description
-
-The goal of this project is to get hands-on experience with containerization and orchestration by deploying a small but realistic web infrastructure using Docker Compose. Instead of installing NGINX, PHP, and MariaDB directly on a machine, each service lives in its own container built from a custom Dockerfile. The final result is a WordPress site served over HTTPS, with NGINX as the only public entry point, PHP-FPM processing WordPress application logic, and MariaDB for the managing of the WordPress MySQL database.
-
-The three services, their roles, and how they connect:
-
-| Service | Role | Port(s) | Volume |
-|---|---|---|---|
-| NGINX | Reverse proxy, endpoint for HTTPS traffic, serving static files and forwarding PHP to PHP-FPM | 443 | `wordpress_data`:`/var/www` |
-| WordPress + PHP-FPM | CMS, PHP runtime | 9000 (PHP-FPM) | wordpress_data `/var/www` |
-| MariaDB | Relational database management | 3306 | database_data `/var/lib/mysql` |
-
-Everything is wired together in a single `docker-compose.yml`. Two user-defined networks enforce a clean separation: the `frontend` network connects NGINX to WordPress/PHP-FPM, and the `backend` network connects WordPress/PHP-FPM to MariaDB. NGINX has no route to the database, and the database is never exposed to the outside world.
+## Architecture Overview
 
 [![Inception Diagram Overview](.doc/InceptionOverview-d3bvstack.svg)](.doc/InceptionOverview-d3bvstack.png)
 
-### Virtual Machines vs Docker
+| Service | Responsibility | Exposed ports | Depends on | Persistent path |
+|---|---|---|---|---|
+| NGINX | TLS decryption, static files serving, reverse proxy to PHP-FPM | `80`, `443` | `wordpress-php` (healthy) | `/var/www` |
+| WordPress + PHP-FPM | WordPress runtime and PHP processing | internal `9000` | `mariadb` (healthy) | `/var/www` |
+| MariaDB | Relational database engine | internal `3306` | none | `/var/lib/mysql` |
 
-| Aspect | Virtual Machine | Docker Container |
+Operational characteristics:
+
+- All services restart automatically with `restart: always`
+- Startup order is gated by health checks (`depends_on.condition: service_healthy`)
+- Container logs use capped json-file rotation (`10m`, `3` files)
+
+## Project Description
+
+This project packages a complete WordPress deployment into reproducible containers and orchestrates them with Docker Compose.
+
+Instead of installing web server, PHP runtime, and database directly on the host, each concern runs in an isolated service:
+
+- NGINX receives external traffic and handles TLS.
+- WordPress + PHP-FPM processes PHP requests.
+- MariaDB stores persistent database data.
+
+The design prioritizes separation of concerns, secure secret handling, and deterministic operations across rebuilds.
+
+## Virtual Machines vs Docker
+
+| Aspect | Virtual Machines | Docker Containers |
 |---|---|---|
-| Isolation model | Full guest OS with its own kernel | Process-level isolation sharing host kernel |
-| Startup time | Slower (boots OS) | Faster (starts process) |
-| Resource footprint | Higher CPU/RAM/storage overhead | Lower overhead |
-| Best fit in this project | Overkill for 3 services | Ideal for fast rebuilds and reproducibility |
+| Isolation boundary | Hardware virtualization + full guest OS | Process isolation using Linux namespaces, cgroups, union filesystems |
+| Startup time | Slower (boots a full OS, init system, drivers) | Faster (just starts a process in a sandbox) |
+| Resource overhead | High: each VM duplicates kernel, OS, drivers | Low: containers share host kernel, only app + deps |
+| Service discovery | Manual IP/hostname management | Built-in DNS by service name |
+| Image lifecycle | Heavyweight, slow to rebuild | Fast, reproducible, layered builds |
+| Fit for this project | Overkill for 3 tightly-coupled services | Ideal for rapid iteration and reproducibility |
 
-You could run this same NGINX, PHP, MariaDB stack inside a VM, and it would work. But a VM boots a full operating system, with its own kernel, hardware drivers, and init system. That is a lot of overhead for three processes.
+**How Docker works:**
 
-Docker containers share the host kernel; Docker uses Linux primitives like namespaces for isolation (what the process can see), cgroups for resource limits, and a union filesystem for layered images to give each container its own isolated environment without duplicating the OS. The result of this approach is that containers start in seconds, use less memory, and the images stay small because they only carry the application and its immediate dependencies.
+Docker containers use the host’s Linux kernel but isolate each service using:
 
-For a project like this, where the goal is rapid iteration and reproducible environments, containers are the obvious fit. You can destroy the whole stack with one command and rebuild it from scratch in under a minute. Doing the same with VMs would be more time consuming and resource intensive.
+- **Namespaces:** Restrict what a process can see (filesystem, network, users, PIDs)
+- **cgroups:** Limit and account for CPU, memory, and I/O usage
+- **Union filesystems:** Layer images for efficient storage and fast rebuilds
+
+This means containers start in seconds, use less memory, and images stay small because they only include the application and its direct dependencies.
+
+**Why containers are better for this project:**
+
+- You can destroy and rebuild the entire stack in seconds with one command.
+- Each service is isolated but shares the host kernel, so resource overhead is minimal.
+- The environment is reproducible: anyone can clone the repo and get the same result, without worrying about host OS drift or VM image mismatches.
+- Networking and service discovery are automatic.
 
 [![General difference between VMs and Containers](.doc/vmVScontainer-d3bvstack.svg)](.doc/vmVScontainer-d3bvstack.png)
 
-### Docker Networks vs Host Network
+## Docker Networks vs Host Network
 
 | Aspect | User-defined Bridge Networks | Host Network |
 |---|---|---|
-| Service discovery | Built-in DNS by container name | No Docker DNS isolation benefits |
-| Isolation | Segmented virtual networks | Shares host network stack directly |
-| Security boundary | Better separation between services | Weaker isolation |
-| Fit for this stack | Frontend/backend split is straightforward | Not suitable for this project goals |
+| Service discovery | Built-in DNS by service name | No Docker DNS boundary |
+| Isolation | Segmented virtual networks per role | Shares host network stack directly |
+| Security | Easier least-privilege connectivity | Weaker isolation |
+| Fit for this stack | Enables frontend/backend split | Not suitable for project goals |
 
-By default, Docker can put all containers on a shared bridge network. The problem is that on the default bridge, containers can only reach each other by IP and those IPs are reassigned every time a container restarts, so hardcoding them is not a sustainable option.
+By default, Docker can place containers on the default `bridge` network, but that model is not ideal for this project.
 
-Using `--network=host` would bypass Docker networking entirely and use the host’s networking stack directly (no virtual bridge, no NAT). That works, but it breaks isolation entirely.
-
-User-defined bridge networks solve both problems. Docker's embedded DNS resolves container names to the right IP automatically, so `wordpress` can reference `mariadb` by name with no configuration. Each user-defined network is also its own isolated segment. Containers on different networks cannot talk to each other unless explicitly connected to both.
-
-That is why this project uses two networks. NGINX sits on `frontend` and talks to WordPress. WordPress sits on both networks and talks to MariaDB over `backend`. MariaDB is on `backend` only and is completely unreachable from NGINX or the outside.
+Using `network_mode: host` is even less suitable here. In host mode, containers share the host network namespace directly, so you lose most network-level isolation and port separation that this project is designed to demonstrate.
 
 [![Comparison between Bridge and host networks in docker](.doc/bridgeVShost-d3bvstack.svg)](.doc/bridgeVShost-d3bvstack.png)
 
-### Docker Secrets vs Environment Variables
+This repository instead uses user-defined bridge networks with explicit IPAM configuration (`srcs/networks-compose.yml`), which gives:
 
-| Aspect | Environment Variables / .env | Docker Secrets |
+- deterministic subnets and gateways
+- service-name DNS resolution on each network
+- clear, enforceable boundaries between edge and data tiers
+
+Implementation in this project:
+
+- `frontend_net`: NGINX and WordPress/PHP-FPM
+- `backend_net`: WordPress/PHP-FPM and MariaDB
+
+Traffic policy enforced by attachment:
+
+- NGINX is attached only to `frontend_net`.
+- MariaDB is attached only to `backend_net` (`internal: true`).
+- WordPress/PHP-FPM is the only service attached to both networks.
+
+This creates a controlled path: client -> NGINX -> PHP-FPM -> MariaDB. There is no direct route from NGINX to MariaDB, and MariaDB is not reachable from the public-facing side.
+
+Result: MariaDB stays unreachable from the public-facing side, and NGINX never talks to the database directly.
+
+
+
+## Docker Secrets vs Environment Variables
+
+| Aspect | Environment Variables (`.env`, `env_file`) | Docker Secrets |
 |---|---|---|
-| Typical use | Non-sensitive configuration | Credentials and private material |
-| Visibility | Exposed through process env / inspect | Mounted as read-only files in /run/secrets |
-| Risk if leaked | Higher | Lower (scoped per-service access) |
-| Fit for this stack | Domain names, ports, DB names | DB passwords and SSL cert/key |
+| Best use | Non-sensitive configuration | Credentials and sensitive identity data |
+| Exposure model | Process environment and inspect metadata | Read-only files in `/run/secrets` |
+| Rotation discipline | Often ad hoc | Explicit file-backed inputs |
+| Fit for this stack | Ports, names, image tags, paths | DB credentials, WordPress user/admin data, SSL key/cert |
 
-A `.env` file contains a dictionary of key-value pairs used for general configurations like the domain name, port numbers of each service, or the name of the database, values that change across environments but are not sensitive. Docker compose interpolates values from main `.env` into the compose file at runtime, which makes the setup configurable without touching the compose file itself.
+**Environment variables (`.env` and `env_file`):**
 
-This infrastructure also makes use of individual service-level `.env` files, this ones are not for interpolation on compose file but to set values in the environment of the container at runtime and are configured by using the docker compose `env-file` option on the service.
+A `.env` file contains key-value pairs for general configuration: domain names, port numbers, image tags, paths, database names—values that change across environments but are not sensitive.
 
-Credentials are a different story. Putting a database root password in a `.env` file means it ends up in the environment of every process that reads it, it might get accidentally committed to a repository, and it is visible to anyone who runs `docker inspect`. Docker Secrets are the solution for this, the secret is defined as a file on the host, Compose mounts it read-only inside the container at `/run/secrets/<name>`, and only the services explicitly granted access to it can see it. Nothing ends up in environment variables or image layers.
+Docker Compose interpolates values from `srcs/.env` into Compose fragments at runtime, which makes the infrastructure configurable without modifying the Compose file itself.
 
-This project uses six secrets:
+This project also uses service-level `env_file` configurations (e.g., `srcs/requirements/nginx/config.env`). These are not for Compose interpolation but for setting container-level environment variables at runtime via the `env_file` directive. This separation keeps service-specific config separate from global infrastructure parameters.
 
-| Secret file | Purpose |
-|---|---|
-| `secrets/mariadb/mysql_root_password.secret` | MariaDB `root` password |
-| `secrets/mariadb/mysql_wp_db_admin_password.secret` | Password for the WordPress database user (what PHP-FPM connects as, not root) |
-| `secrets/wordpress-php/wp_admin_password.secret` | WordPress admin account password |
-| `secrets/wordpress-php/wp_user_password.secret` | WordPress user account password |
-| `secrets/ssl/dbarba-v.42.fr.cert` | SSL certificate used by NGINX |
-| `secrets/ssl/dbarba-v.42.fr.key` | SSL private key used by NGINX |
+**Why credentials should never be in environment variables:**
 
-How missing secrets are handled:
+Putting a database password in a `.env` file or `env_file` creates multiple risks:
 
-| Secret group | If missing, what happens when running `make secrets` |
-|---|---|
-| Database/WordPress password secrets | You are prompted for input, then the secret file is created from your value |
-| SSL cert and key secrets | They are generated automatically (self-signed cert + private key) |
+- The value ends up in the environment of every process that reads it.
+- It may be accidentally committed to the repository.
+- It is visible to anyone who runs `docker inspect` on the container.
+- Environment variables are often logged or exported by default in many software packages.
 
-### Docker Volumes vs Bind Mounts
+**Docker Secrets:**
 
-| Aspect | Bind Mount | Named Volume |
+Docker Secrets provide a secure alternative:
+
+- Secrets are defined as files on the host.
+- Compose mounts them read-only inside containers at `/run/secrets/<name>`.
+- Only services explicitly granted access to a secret can see it.
+- Nothing ends up in environment variables, image layers, or `docker inspect` output.
+
+**Secrets used in this project:**
+
+| Secret file | Purpose | Handling |
 |---|---|---|
-| Ownership | Host path managed by user/OS | Managed by Docker |
-| Portability | Depends on host directory layout | Portable across Docker hosts |
-| Setup friction | Requires existing/consistent paths | Auto-created when needed |
-| Fit for this stack | More fragile across machines | Preferred for DB and WordPress persistence |
+| `secrets/mariadb/mysql_root_password.secret` | MariaDB root password | Interactive prompt on first run |
+| `secrets/mariadb/mysql_wp_db_admin_password.secret` | MariaDB WordPress database user password | Interactive prompt on first run |
+| `secrets/mariadb/mysql_wp_db_admin_username.secret` | MariaDB WordPress database user name | Interactive prompt on first run |
+| `secrets/wordpress-php/wp_admin_username.secret` | WordPress admin account username | Interactive prompt on first run |
+| `secrets/wordpress-php/wp_admin_password.secret` | WordPress admin account password | Interactive prompt on first run |
+| `secrets/wordpress-php/wp_admin_mail.secret` | WordPress admin email address | Interactive prompt on first run |
+| `secrets/wordpress-php/wp_user_username.secret` | WordPress regular user account username | Interactive prompt on first run |
+| `secrets/wordpress-php/wp_user_password.secret` | WordPress regular user account password | Interactive prompt on first run |
+| `secrets/wordpress-php/wp_user_mail.secret` | WordPress regular user email address | Interactive prompt on first run |
+| `secrets/ssl/<domain>.cert` | SSL/TLS certificate | Auto-generated if missing |
+| `secrets/ssl/<domain>.key` | SSL/TLS private key | Auto-generated if missing |
 
-For this setup we need data persistance across container restarts, rebuilds, etc and both volumes and bind mounts let a container write data that survives the container being stopped or removed. The difference is who manages the storage and how portable it is.
+Missing secrets are created by `make secrets`:
 
-A bind mount mounts a file or directory from the host machine into a container. That works fine on your machine, but the moment someone else clones the repo and runs it, that path either does not exist or points to something completely different. The portability of the whole setup breaks.
+- **Credential files** (passwords, usernames, emails): you are prompted interactively to enter values, then the files are created.
+- **SSL certificate and key**: automatically generated using `openssl req -x509` with a self-signed approach if missing.
 
-Named volumes are managed by Docker. They live under Docker's own storage directory, they get created automatically when the stack starts, and work anywhere Docker is installed without dependency on the host paths. That is why this project uses named volumes for both the WordPress files and the MariaDB data directory. The stack is fully self-contained.
+In this implementation, general configuration stays in `srcs/.env` and per-service `config.env` files, while secrets are mounted from files in `srcs/secrets-compose.yml`. This keeps sensitive values completely out of image layers, environment variables, and normal inspection flows.
 
----
+## Docker Volumes vs Bind Mounts
+
+| Aspect | Bind Mounts | Docker-managed Volumes |
+|---|---|---|
+| Backing storage | Explicit host path | Docker volume abstraction |
+| Portability | Depends on host path conventions | More portable by default |
+| Operational control | Direct host visibility and control | Cleaner lifecycle via Docker tooling |
+| Fit for this stack | Good when host path is intentionally fixed | Good for generic persistence patterns |
+
+This project combines both behaviors: named volumes (`database_data`, `wordpress_data`) are defined in compose and mapped to fixed host paths via `driver_opts`.
+
+Why this matters:
+
+- persistent data survives container rebuilds
+- data location remains explicit for backup and inspection
+- cleanup semantics are clear (`make down` keeps data, `make clean` removes it)
 
 ## Instructions
 
-### Prerequisites
+### 1. Prerequisites
 
-- Docker and Docker Compose installed
-- A `srcs/.env` edited with custom configurations
-- Secret files are optional before first run: execute `make secrets` to create missing ones
-	- Password secrets are requested interactively
-	- SSL certificate/key secrets are auto-generated if absent
+- Linux host with Docker Engine and Docker Compose plugin available
+- A user account that can run Docker commands
+- Write access to `/home/$USER/data` (used by persistent bind mounts)
 
-### Running the stack
+### 2. Clone and move into the project
 
-The `Makefile` covers everything. Run `make help` to see the full list, but the most useful targets are:
+```sh
+git clone https://github.com/d3bvstack/Inception.git
+cd Inception
+```
 
-| Command | Description |
+### 3. Add local DNS entries
+
+Add your domain to `/etc/hosts` so local requests resolve to your machine:
+
+```text
+127.0.0.1  <your_login>.42.fr
+127.0.0.1  www.<your_login>.42.fr
+```
+
+For the default repository values, this is:
+
+```text
+127.0.0.1  dbarba-v.42.fr
+127.0.0.1  www.dbarba-v.42.fr
+```
+
+### 4. Configure environment values
+
+Review and edit `srcs/.env` as needed. The file controls image names, ports, paths, network ranges, and service variables.
+
+### 5. Start the stack
+
+```sh
+make
+```
+
+What happens on first run:
+
+- Missing credential secret files are requested interactively
+- Missing SSL key/certificate are auto-generated (self-signed)
+- Data directories are created under `/home/$USER/data/...`
+- Compose starts all services in detached mode
+
+### 6. Open the site
+
+- `https://<your_login>.42.fr`
+- `https://<your_login>.42.fr/wp-admin`
+- `https://<your_login>.42.fr/wp-login.php`
+
+## Operational commands
+
+The Makefile is the primary interface.
+
+| Command | Purpose |
 |---|---|
-| `make` / `make inception` / `make all` / `make up` | Start all containers in detached mode |
-| `make build` | Rebuild images (reads the configured `.env`) |
-| `make down` | Stop and remove containers and networks |
-| `make stop` | Stop running containers without removing them |
-| `make restart` | Restart all containers |
-| `make ps` | Show container status |
+| `make` / `make all` / `make up` / `make inception` | Start all services |
+| `make stop` | Stop running containers |
+| `make down` | Stop and remove containers + networks (keeps volumes/data) |
+| `make restart` | Restart all services |
+| `make ps` | Show service status |
 | `make shell SERVICE=<name>` | Open `/bin/sh` inside a running container |
-| `make config` | Print the resolved Compose configuration (good for debugging) |
-| `make secrets` | Check for secrets and create missing ones (prompts for passwords; auto-generates SSL cert/key) |
-| `make clean` | Remove containers, volumes and host data directories |
-| `make fclean` | Full cleanup — containers, volumes, images and host data directories |
-| `make re` | Full rebuild (`fclean` + `all`) |
+| `make config` | Print the fully resolved Compose configuration |
+| `make build` | Rebuild images (uses `ENV`, default `srcs/.env`) |
+| `make secrets` | Check/create secret files |
+| `make clean` | Remove containers, volumes, and host data folders |
+| `make fclean` | `clean` + remove images |
+| `make re` | Full rebuild (`fclean` then `all`) |
+| `make help` | Print command help |
 
----
+## Configuration model
 
-## Resources
+Configuration is split by concern:
+
+- `srcs/.env`: compose interpolation and global infrastructure variables
+- `srcs/requirements/*/config.env`: per-service runtime environment values
+- `srcs/secrets-compose.yml`: file-backed Docker secrets declarations
+
+Important notes:
+
+- Compose interpolation values in `srcs/.env` affect all included Compose fragments.
+- Secret values are not loaded from `.env`; they are mounted from files in `/run/secrets`.
+- Build-time arguments are passed explicitly from compose service definitions.
+
+## Secrets model
+
+Credentials and identity data are stored as files under `secrets/` (repository root). Missing files are created by `make secrets`.
+
+Required secret files:
+
+```text
+secrets/
+├── mariadb/
+│   ├── mysql_root_password.secret
+│   ├── mysql_wp_db_admin_password.secret
+│   └── mysql_wp_db_admin_username.secret
+├── wordpress-php/
+│   ├── wp_admin_mail.secret
+│   ├── wp_admin_password.secret
+│   ├── wp_admin_username.secret
+│   ├── wp_user_mail.secret
+│   ├── wp_user_password.secret
+│   └── wp_user_username.secret
+└── ssl/
+    ├── <domain>.cert
+    └── <domain>.key
+```
+
+Behavior of secret bootstrap:
+
+- Credential files: prompted interactively via `/dev/tty`
+- SSL files: generated automatically with `openssl req -x509`
+- Non-interactive shells without existing credential files: fail fast with an explicit error
+
+## Persistence model
+
+The project uses named volumes mapped to host bind locations through `driver_opts`.
+
+| Volume | Container path | Host path |
+|---|---|---|
+| `database_data` | `/var/lib/mysql` | `/home/${USER_LOGIN}/data/mariadb` |
+| `wordpress_data` | `/var/www` | `/home/${USER_LOGIN}/data/wordpress` |
+
+Implications:
+
+- Data survives container recreation and image rebuilds.
+- `make down` keeps persisted data.
+- `make clean` and `make fclean` remove persisted data directories.
+
+## Networking model
+
+Two bridge networks enforce separation of concerns:
+
+- `frontend_net` (public-facing): NGINX + WordPress/PHP-FPM
+- `backend_net` (internal only): WordPress/PHP-FPM + MariaDB
+
+Security and reachability outcomes:
+
+- MariaDB is not connected to the public-facing network.
+- NGINX has no direct route to MariaDB.
+- WordPress/PHP-FPM is the only service that bridges both layers.
+
+## Request flow
+
+1. Client connects to NGINX on `443`.
+2. NGINX serves static assets directly when possible.
+3. PHP requests are forwarded to WordPress/PHP-FPM on `9000`.
+4. WordPress executes application logic and queries MariaDB on `3306`.
+5. Response returns through NGINX to the client over HTTPS.
+
+## Troubleshooting
+
+### Containers are not healthy
+
+```sh
+make ps
+docker compose -f srcs/docker-compose.yml logs --tail=200
+```
+
+Focus on:
+
+- MariaDB initialization errors (secrets, permissions, bad config values)
+- PHP-FPM port mismatch (`PHPFPM_LISTEN_PORT`)
+- NGINX template rendering or certificate path issues
+
+### Browser cannot reach domain
+
+Check:
+
+- `/etc/hosts` entries
+- host ports `80` and `443` are free
+- NGINX container is running and healthy
+
+### Secret generation fails in CI/non-interactive shell
+
+`make secrets` requires a TTY for credential prompts. Pre-create all credential files before running in non-interactive environments.
+
+### Data cleanup did not happen as expected
+
+`make down` does not remove persisted data. Use `make clean` or `make fclean` for full data reset.
+
+## Repository map
+
+```text
+.
+├── Makefile
+├── README.md
+├── USER_DOC.md
+├── DEV_DOC.md
+└── srcs/
+    ├── docker-compose.yml
+    ├── networks-compose.yml
+    ├── secrets-compose.yml
+    ├── volumes-compose.yml
+    ├── requirements/
+    │   ├── mariadb/
+    │   ├── nginx/
+    │   └── wordpress-php/
+    └── tools/
+```
+
+## Learning resources
 
 ### Docker Core
 
@@ -205,6 +469,9 @@ The `Makefile` covers everything. Run `make help` to see the full list, but the 
 
 ### AI usage
 
-- Restructuring and styling both `.md` documentation and code comments.
+- Restructuring, styling and extending both `.md` documentation and code comments.
 - Fetching and summarising all linked resources to write accurate inline descriptions.
 - Specialized [Dockerdocs AI Assistant](https://www.docker.com/blog/docker-documentation-ai-powered-assistant/) for docker related queries.
+
+---
+
