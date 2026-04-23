@@ -1,297 +1,305 @@
 # Developer Documentation
 
+Technical reference for the Inception Docker stack.
+
+This document is designed for anyone who needs to understand how configuration, secrets, templates, and entrypoints behave on the Inception project implementation.
+
 ## Table of Contents
 
-- [Configuration (`.env`)](#configuration-env)
+- [System Model](#system-model)
+- [Configuration Model (`srcs/.env`)](#configuration-model-srcsenv)
   - [General](#general)
   - [Networks](#networks)
   - [Volumes](#volumes)
-  - [Services](#services)
+  - [Service Variables](#service-variables)
   - [Derived Image Names](#derived-image-names)
-- [Secrets](#secrets)
-- [Configuration Files](#configuration-files)
-- [Service Internals](#service-internals)
+- [Secrets Model](#secrets-model)
+- [Configuration Sources](#configuration-sources)
+- [Runtime Service Internals](#runtime-service-internals)
   - [NGINX](#nginx)
-    - [How `nginx.conf` and `server.conf.tmpl` are used](#how-nginxconf-and-serverconftmpl-are-used)
-    - [What the NGINX entrypoint does](#what-the-nginx-entrypoint-does)
   - [MariaDB](#mariadb)
-    - [How `my.cnf.tmpl` is used](#how-mycnftmpl-is-used)
-    - [What the MariaDB entrypoint does](#what-the-mariadb-entrypoint-does)
   - [WordPress + PHP-FPM](#wordpress--php-fpm)
-    - [How `php-fpm.conf.tmpl` is used](#how-php-fpmconftmpl-is-used)
-    - [What the WordPress + PHP-FPM entrypoint does](#what-the-wordpress--php-fpm-entrypoint-does)
-- [Make Commands](#make-commands)
-  - [Lifecycle](#lifecycle)
-  - [Inspection](#inspection)
-  - [Build & Cleanup](#build--cleanup)
-- [Data Persistence](#data-persistence)
+- [Make Targets](#make-targets)
+- [Persistence](#persistence)
 
-## Configuration (`.env`)
+## System Model
 
-All project settings are controlled through `srcs/.env`. The variables are grouped by concern below.
+The stack is split across two Docker networks:
+
+- Frontend network: internet-facing path (`client -> nginx -> php-fpm`).
+- Backend network: data path (`php-fpm -> mariadb`).
+
+Persistence is provided by two host-backed Docker volumes:
+
+- WordPress data (`/var/www` in container).
+- MariaDB data (`/var/lib/mysql` in container).
+
+## Configuration Model (`srcs/.env`)
+
+All non-secret configuration is centralized in `srcs/.env`.
 
 ### General
 
 | Variable | Description |
 |---|---|
-| `USER_LOGIN` | Login name; used to derive the domain and host data |
-| `DOMAIN_NAME` | Site domain (defaults to `${USER_LOGIN}.42.fr`) |
-| `ROOT_DOMAIN` | Root domain used for WordPress install |
-| `SITE_TITLE` | Title for the WordPress site |
-| `COMPOSE_PROJECT_NAME` | Docker variable that names the compose project |
+| `USER_LOGIN` | Login name; used to derive domain and host data paths |
+| `DOMAIN_NAME` | Site domain (default: `${USER_LOGIN}.42.fr`) |
+| `ROOT_DOMAIN` | Root domain used for WordPress setup |
+| `SITE_TITLE` | WordPress site title |
+| `COMPOSE_PROJECT_NAME` | Docker Compose project name |
 
 ### Networks
 
-Two Docker networks isolate traffic between services.
+Two isolated networks are created.
 
-**Frontend Network** — Connects Internet ↔ NGINX ↔ PHP-FPM.
+Frontend network (`internet <-> nginx <-> php-fpm`):
 
 | Variable | Description |
 |---|---|
 | `NETWORK_FRONTEND_NAME` | Network name |
 | `NETWORK_FRONTEND_SUBNET` | Subnet CIDR |
 | `NETWORK_FRONTEND_GATEWAY` | Gateway IP |
-| `NETWORK_FRONTEND_NGINX_IP` | Static IP for the NGINX container |
-| `NETWORK_FRONTEND_PHPFPM_IP` | Static IP for the PHP-FPM container |
+| `NETWORK_FRONTEND_NGINX_IP` | Static IP for NGINX |
+| `NETWORK_FRONTEND_PHPFPM_IP` | Static IP for PHP-FPM |
 
-**Backend Network** — Connects PHP-FPM ↔ MariaDB.
+Backend network (`php-fpm <-> mariadb`):
 
 | Variable | Description |
 |---|---|
 | `NETWORK_BACKEND_NAME` | Network name |
 | `NETWORK_BACKEND_SUBNET` | Subnet CIDR |
 | `NETWORK_BACKEND_GATEWAY` | Gateway IP |
-| `NETWORK_BACKEND_PHPFPM_IP` | Static IP for the PHP-FPM container |
-| `NETWORK_BACKEND_DB_IP` | Static IP for the MariaDB container |
+| `NETWORK_BACKEND_PHPFPM_IP` | Static IP for PHP-FPM |
+| `NETWORK_BACKEND_DB_IP` | Static IP for MariaDB |
 
 ### Volumes
 
 | Variable | Description |
 |---|---|
 | `VOLUME_DB_NAME` | Docker volume name for MariaDB data |
-| `VOLUME_DB_MOUNTPOINT` | Mount path inside the container (`/var/lib/mysql`) |
-| `VOLUME_DB_HOST_PATH` | Host path where DB data is persisted |
-| `VOLUME_WP_NAME` | Docker volume name for WordPress files |
-| `VOLUME_WP_MOUNTPOINT` | Mount path inside the container (`/var/www`) |
-| `VOLUME_WP_HOST_PATH` | Host path where WordPress files are persisted |
+| `VOLUME_DB_MOUNTPOINT` | Container mount point for DB data (`/var/lib/mysql`) |
+| `VOLUME_DB_HOST_PATH` | Host path for DB persistence |
+| `VOLUME_WP_NAME` | Docker volume name for WordPress data |
+| `VOLUME_WP_MOUNTPOINT` | Container mount point for WordPress (`/var/www`) |
+| `VOLUME_WP_HOST_PATH` | Host path for WordPress persistence |
 
-### Services
+### Service Variables
 
-**MariaDB**
+#### MariaDB
 
 | Variable | Description |
 |---|---|
 | `MDB_BUILD_CONTEXT` | Build context path |
-| `MDB_DOCKERFILE` | Dockerfile filename |
-| `MDB_IMAGE_REPO` | Image repository name |
+| `MDB_DOCKERFILE` | Dockerfile name |
+| `MDB_IMAGE_REPO` | Image repository |
 | `MDB_IMAGE_TAG` | Image tag |
 | `MDB_CONTAINER_NAME` | Container name |
-| `MDB_CONFIG_ENV` | Path to the service config env-file |
-| `MDB_ADMIN` | MariaDB admin username (**managed as a secret**)|
+| `MDB_CONFIG_ENV` | Env file path for the service |
+| `MDB_ADMIN` | MariaDB admin username (stored as secret) |
 | `MDB_CHARSET` | Default character set |
 | `MDB_COLLATION` | Default collation |
-| `MDB_ENGINE_PORT` | MariaDB engine port (default `3306`) |
+| `MDB_ENGINE_PORT` | MariaDB engine port (default: `3306`) |
 
-**WordPress + PHP-FPM**
+#### WordPress + PHP-FPM
 
 | Variable | Description |
 |---|---|
 | `WP_BUILD_CONTEXT` | Build context path |
-| `WP_DOCKERFILE` | Dockerfile filename |
-| `WP_IMAGE_REPO` | Image repository name |
+| `WP_DOCKERFILE` | Dockerfile name |
+| `WP_IMAGE_REPO` | Image repository |
 | `WP_IMAGE_TAG` | Image tag |
 | `WP_CONTAINER_NAME` | Container name |
-| `WP_CONFIG_ENV` | Path to the service config env-file |
+| `WP_CONFIG_ENV` | Env file path for the service |
 | `WP_DB_NAME` | WordPress database name |
-| `WP_DB_ADMIN` | MariaDB user with privileges on the WordPress DB (**managed as a secret**)|
-| `WP_DB_CHARSET` | WordPress database character set |
-| `WP_DB_COLLATION` | WordPress database collation |
-| `PHPFPM_LISTEN_PORT` | PHP-FPM listener port (default `9000`) |
-| `DB_HOST` | Hostname of the MariaDB container |
+| `WP_DB_ADMIN` | DB user with privileges on WordPress DB (stored as secret) |
+| `WP_DB_CHARSET` | WordPress DB character set |
+| `WP_DB_COLLATION` | WordPress DB collation |
+| `PHPFPM_LISTEN_PORT` | PHP-FPM listen port (default: `9000`) |
+| `DB_HOST` | MariaDB host reachable by WordPress |
 | `DB_SERVICE_PORT` | MariaDB port reachable by WordPress |
-| `DB_NAME` | Database name WordPress connects to |
-| `DB_USER` | Database user WordPress connects as |
+| `DB_NAME` | Database name used by WordPress |
+| `DB_USER` | Database user used by WordPress |
 | `WP_VERSION` | WordPress version to install |
-| `WP_ADMIN` | WordPress administrator username (**managed as a secret**) |
-| `WP_ADMIN_MAIL` | Administrator email address (**managed as a secret**) |
-| `WP_USER` | Additional WordPress user username (**managed as a secret**)|
+| `WP_ADMIN` | WordPress admin username (stored as secret) |
+| `WP_ADMIN_MAIL` | WordPress admin email (stored as secret) |
+| `WP_USER` | Additional WordPress username (stored as secret) |
 | `WP_USER_ROLE` | Role for the additional user |
-| `WP_USER_MAIL` | Email address for the additional user (**managed as a secret**) |
+| `WP_USER_MAIL` | Email for the additional user (stored as secret) |
 | `WP_WEBROOT` | Web root path inside the container |
 
-**NGINX**
+#### NGINX
 
 | Variable | Description |
 |---|---|
 | `NGINX_BUILD_CONTEXT` | Build context path |
-| `NGINX_DOCKERFILE` | Dockerfile filename |
-| `NGINX_IMAGE_REPO` | Image repository name |
+| `NGINX_DOCKERFILE` | Dockerfile name |
+| `NGINX_IMAGE_REPO` | Image repository |
 | `NGINX_IMAGE_TAG` | Image tag |
 | `NGINX_CONTAINER_NAME` | Container name |
-| `NGINX_CONFIG_ENV` | Path to the service config env-file |
-| `NGINX_HOST_PORT` | Host port exposed to the outside (default `443`) |
-| `NGINX_LISTEN_PORT` | Port NGINX listens on inside the container |
-| `NGINX_PHP_SERVICE` | Hostname of the PHP-FPM container |
-| `NGINX_PHP_SERVICE_PORT` | PHP-FPM port NGINX forwards requests to |
-| `WEB_DATA` | Root of served web content inside the container |
+| `NGINX_CONFIG_ENV` | Env file path for the service |
+| `NGINX_HOST_PORT` | Exposed host port (default: `443`) |
+| `NGINX_LISTEN_PORT` | Internal NGINX listen port |
+| `NGINX_PHP_SERVICE` | PHP-FPM hostname |
+| `NGINX_PHP_SERVICE_PORT` | PHP-FPM port used by NGINX |
+| `WEB_DATA` | Root directory for served content |
 
-**SSL**
+#### SSL
 
 | Variable | Description |
 |---|---|
 | `KEY_NAME` | SSL private key filename |
-| `KEY_PATH` | Directory inside the container for the key (`/run/secrets`) |
-| `KEY_SECRET_NAME` | Name for the docker secret |
+| `KEY_PATH` | Key directory in container (`/run/secrets`) |
+| `KEY_SECRET_NAME` | Docker secret name for key |
 | `CERT_NAME` | SSL certificate filename |
-| `CERT_PATH` | Directory inside the container for the certificate (`/run/secrets`) |
-| `CERT_SECRET_NAME` | Name for the docker secret |
-
+| `CERT_PATH` | Certificate directory in container (`/run/secrets`) |
+| `CERT_SECRET_NAME` | Docker secret name for cert |
 
 ### Derived Image Names
 
-These variables are composed from the repo and tag variables above and do not need to be set manually.
+These values are composed automatically from repository and tag variables.
 
-| Variable | Value pattern |
+| Variable | Pattern |
 |---|---|
 | `DB_IMAGE_NAME` | `${MDB_IMAGE_REPO}:${MDB_IMAGE_TAG}` |
 | `WP_IMAGE_NAME` | `${WP_IMAGE_REPO}:${WP_IMAGE_TAG}` |
 | `NGINX_IMAGE_NAME` | `${NGINX_IMAGE_REPO}:${NGINX_IMAGE_TAG}` |
 
----
+## Secrets Model
 
-## Secrets
+Secret values are file-based and must not be placed in `srcs/.env`.
 
-Secret values (including usernames, emails, and passwords) are read from files and are **not** stored in `.env`. Create the following files before the first build:
+Required structure:
 
-```
+```text
 secrets/
 ├── mariadb/
-│   ├── mysql_root_password.secret         # mysql_root_password secret
-│   ├── mysql_wp_db_admin_password.secret  # mysql_wp_db_admin_password secret
-│   └── mysql_wp_db_admin_username.secret  # mysql_wp_db_admin_username secret
+│   ├── mysql_root_password.secret
+│   ├── mysql_wp_db_admin_password.secret
+│   └── mysql_wp_db_admin_username.secret
 ├── wordpress-php/
-│   ├── wp_admin_password.secret           # wp_admin_password secret
-│   ├── wp_admin_username.secret           # wp_admin_username secret
-│   ├── wp_admin_mail.secret               # wp_admin_mail secret
-│   ├── wp_user_password.secret            # wp_user_password secret
-│   ├── wp_user_username.secret            # wp_user_username secret
-│   └── wp_user_mail.secret                # wp_user_mail secret
+│   ├── wp_admin_password.secret
+│   ├── wp_admin_username.secret
+│   ├── wp_admin_mail.secret
+│   ├── wp_user_password.secret
+│   ├── wp_user_username.secret
+│   └── wp_user_mail.secret
 └── ssl/
-    ├── dbarba-v.42.fr.cert                # SSL certificate secret
-    └── dbarba-v.42.fr.key                 # SSL private key secret
+    ├── dbarba-v.42.fr.cert
+    └── dbarba-v.42.fr.key
 ```
 
----
+## Configuration Sources
 
-## Configuration Files
-
-| Service | File |
+| Service | Source file |
 |---|---|
-| NGINX | `srcs/requirements/nginx/conf/nginx.conf` |
-| NGINX (vhost) | `srcs/requirements/nginx/conf/server.conf.tmpl` |
-| PHP-FPM | `srcs/requirements/wordpress-php/conf/php-fpm.conf.tmpl` |
-| MariaDB | `srcs/requirements/mariadb/conf/my.cnf.tmpl` |
+| NGINX (global) | `srcs/requirements/nginx/conf/nginx.conf` |
+| NGINX (vhost template) | `srcs/requirements/nginx/conf/server.conf.tmpl` |
+| PHP-FPM template | `srcs/requirements/wordpress-php/conf/php-fpm.conf.tmpl` |
+| MariaDB template | `srcs/requirements/mariadb/conf/my.cnf.tmpl` |
 
----
-
-## Service Internals
+## Runtime Service Internals
 
 ### NGINX
 
-#### How `nginx.conf` and `server.conf.tmpl` are used
+#### Template rendering model
 
-`nginx.conf` is the global NGINX configuration. It is copied by the entrypoint from the build-context path `/nginx-docker/conf/nginx.conf` to `/etc/nginx/nginx.conf`. It configures worker processes, events management, global TLS policy (TLS versions, available ciphers and SSL session cache), and it also adds the `include /etc/nginx/conf.d/*.conf`, which loads virtual host configs. It also sets `daemon off` so NGINX runs in the foreground and keeps the container alive.
+`nginx.conf` is copied from `/nginx-docker/conf/nginx.conf` to `/etc/nginx/nginx.conf`.
 
-`server.conf.tmpl` is a virtual host template. The entrypoint processes it with `envsubst`, substituting a list of variables:
+`server.conf.tmpl` is rendered with `envsubst` into `/etc/nginx/conf.d/${DOMAIN_NAME}.conf` using:
 
-```
+```text
 ${DOMAIN_NAME} ${NGINX_LISTEN_PORT} ${NGINX_HOST_PORT}
 ${CERT_NAME} ${KEY_NAME} ${CERT_PATH} ${KEY_PATH}
 ${WEB_DATA} ${WP_CONTAINER_NAME} ${PHPFPM_HOST} ${PHPFPM_LISTEN_PORT}
 ```
 
-The new file with expanded variables is written to `/etc/nginx/conf.d/${DOMAIN_NAME}.conf` and the template is removed. The resulting vhost config:
+The resulting vhost:
 
-- Rejects unknown hostnames with HTTP 444.
-- Redirects all port 80 traffic to HTTPS port 443.
-- Terminates TLS and serves WordPress files from `${WEB_DATA}/${DOMAIN_NAME}`.
-- Forwards `*.php` requests to PHP-FPM on `${PHPFPM_HOST}:${PHPFPM_LISTEN_PORT}`.
-- Adds OWASP-recommended security headers (`X-Frame-Options`, `X-Content-Type-Options`, CSP, etc.).
-- Caches static assets in the browser for 180 days.
-- Denies access to hidden files and PHP execution inside upload directories.
+- Rejects unknown hosts with HTTP `444`.
+- Redirects HTTP (`80`) to HTTPS (`443`).
+- Terminates TLS and serves content from `${WEB_DATA}/${DOMAIN_NAME}`.
+- Proxies `*.php` to `${PHPFPM_HOST}:${PHPFPM_LISTEN_PORT}`.
+- Applies security headers (for example `X-Frame-Options`, `X-Content-Type-Options`, CSP).
+- Caches static assets for 180 days.
+- Denies hidden files and PHP execution in upload directories.
 
-#### What the NGINX entrypoint does
+#### Entrypoint behavior
 
-`tools/setup.sh` runs once at container start and then `exec`s NGINX:
+`tools/setup.sh` performs startup orchestration, then `exec`s NGINX:
 
-1. Moves `nginx.conf` from `/nginx-docker/conf/nginx.conf` → `/etc/nginx/nginx.conf`.
-2. Runs `envsubst` on `server.conf.tmpl` with the explicit variable list and writes the result to `/etc/nginx/conf.d/${DOMAIN_NAME}.conf`. Removes the template afterwards.
-3. On restart (template no longer present): verifies the config file exists and continues.
-4. Validates the full NGINX configuration with `nginx -t`; exits non-zero on failure.
-5. `exec /usr/sbin/nginx` replaces the shell process with NGINX.
-
----
+1. Move `nginx.conf` into `/etc/nginx/nginx.conf`.
+2. Render `server.conf.tmpl` and remove the template.
+3. On restart, verify rendered vhost config exists.
+4. Validate config using `nginx -t`.
+5. `exec /usr/sbin/nginx` so NGINX becomes PID 1.
 
 ### MariaDB
 
-#### How `my.cnf.tmpl` is used
+#### Template rendering model
 
-`my.cnf.tmpl` is a MariaDB config file template that configures the `[mysqld]` section: datadir, InnoDB engine settings, character set, collation, bind address, and port. The entrypoint substitutes the three environment-specific variables — `${MDB_CHARSET}`, `${MDB_COLLATION}`, and `${MDB_ENGINE_PORT}` — with `envsubst` and writes the result to `/etc/mysql/mariadb.conf.d/99-custom.cnf`. MariaDB automatically loads all `.cnf` files from that directory and the `99-` prefix ensures these settings apply last and override any defaults.
+`my.cnf.tmpl` is rendered into `/etc/mysql/mariadb.conf.d/99-custom.cnf` with:
 
-#### What the MariaDB entrypoint does
+- `${MDB_CHARSET}`
+- `${MDB_COLLATION}`
+- `${MDB_ENGINE_PORT}`
 
-`tools/setup.sh` configures the database on first start and `exec` `mariadbd` for subsequent runs:
+Because MariaDB loads files in that directory, the `99-` prefix ensures these values apply after defaults.
 
-1. Reads secrets from `/run/secrets/mysql_root_password` and `/run/secrets/mysql_wp_db_admin_password`.
-2. Processes `my.cnf.tmpl` → `/etc/mysql/mariadb.conf.d/99-custom.cnf`; on restart the template is gone but the rendered file already exists.
-3. **First boot only**: runs `mariadb-install-db` to initialize the data directory at `/var/lib/mysql`.
-4. Starts a temporary `mariadbd` instance with `--skip-networking` (no external connections accepted) in the background.
-5. Polls `mysqladmin ping` every second for up to 60 s; aborts if the server never becomes reachable.
-6. **Secures the install** (idempotent `ALTER USER`, so safe on restarts):
-   - Sets the `root@localhost` password.
-   - Drops anonymous users and the `test` database.
+#### Entrypoint behavior
+
+`tools/setup.sh` initializes on first boot and starts `mariadbd`:
+
+1. Read secrets from `/run/secrets/mysql_root_password` and `/run/secrets/mysql_wp_db_admin_password`.
+2. Render `my.cnf.tmpl` into `99-custom.cnf`.
+3. First boot only: run `mariadb-install-db` on `/var/lib/mysql`.
+4. Start temporary `mariadbd` with `--skip-networking`.
+5. Poll readiness with `mysqladmin ping` for up to 60s.
+6. Secure installation:
+   - Set `root@localhost` password.
+   - Remove anonymous users.
+   - Remove `test` database.
    - `FLUSH PRIVILEGES`.
-7. Creates the WordPress database (`CREATE DATABASE IF NOT EXISTS`) and the DB admin user (`CREATE USER IF NOT EXISTS`) with `GRANT ALL PRIVILEGES` on that database.
-8. Shuts down the temporary instance cleanly with `mysqladmin shutdown`.
-9. `exec /usr/sbin/mariadbd --user=mysql --datadir=/var/lib/mysql` — replaces the shell with the real, network-facing server (PID 1).
-
----
+7. Create WordPress DB and DB admin user if missing.
+8. Shut down temporary instance (`mysqladmin shutdown`).
+9. `exec /usr/sbin/mariadbd --user=mysql --datadir=/var/lib/mysql`.
 
 ### WordPress + PHP-FPM
 
-#### How `php-fpm.conf.tmpl` is used
+#### Template rendering model
 
-`php-fpm.conf.tmpl` is the main PHP-FPM configuration template. It defines the global FPM options and the `[www]` worker pool. The only variable substituted is `${PHPFPM_LISTEN_PORT}`, which sets the TCP address the pool listens on (`0.0.0.0:${PHPFPM_LISTEN_PORT}`), making the pool reachable by the NGINX container over the frontend network. The entrypoint renders the template with `envsubst '\${PHPFPM_LISTEN_PORT}'` and writes the result to `/etc/php/${PHP_FPM_VERSION}/fpm/php-fpm.conf`, replacing the distro-supplied default.
+`php-fpm.conf.tmpl` is rendered into `/etc/php/${PHP_FPM_VERSION}/fpm/php-fpm.conf`.
 
-#### What the WordPress + PHP-FPM entrypoint does
+Substituted variable:
 
-`tools/setup.sh` installs and configures WordPress, then `exec`s PHP-FPM:
+- `${PHPFPM_LISTEN_PORT}` (bind address becomes `0.0.0.0:${PHPFPM_LISTEN_PORT}`)
 
-1. Reads secrets from `/run/secrets/` (DB admin password, WP admin password, WP user password).
-2. Processes `php-fpm.conf.tmpl` → `/etc/php/${PHP_FPM_VERSION}/fpm/php-fpm.conf`; exits non-zero if the template is missing.
-3. Installs **WP-CLI** (`wp`) into `/usr/local/bin/wp` if not already present.
-4. **First boot only**: downloads WordPress core files with `wp core download --skip-content` at the configured version.
-5. **First boot only**:
-   - Generates `wp-config.php` with DB credentials read from secrets.
-   - Runs `wp core install` (sets site URL, title, admin account).
-   - Updates all plugins.
-   - Creates the secondary WordPress user with the configured role.
-   - Installs and activates the `twentytwentythree` theme.
-   - Creates a static front page and sets it as the homepage.
-6. Sets ownership of `${WP_WEBROOT}` to `www-data:www-data`.
-7. `exec php-fpm${PHP_FPM_VERSION} -F` — replaces the shell with PHP-FPM running in the foreground (PID 1). Falls back to `php-fpm` if the versioned executable is not found.
+#### Entrypoint behavior
 
----
+`tools/setup.sh` installs/configures WordPress, then starts PHP-FPM:
 
-## Make Commands
+1. Read secrets from `/run/secrets` (DB admin password, WP admin password, WP user password).
+2. Render `php-fpm.conf.tmpl`; fail fast if template is missing.
+3. Install WP-CLI (`/usr/local/bin/wp`) if absent.
+4. First boot only: download WordPress core with configured `WP_VERSION`.
+5. First boot only:
+   - Generate `wp-config.php` using DB credentials.
+   - Run `wp core install`.
+   - Update plugins.
+   - Create secondary WordPress user.
+   - Install and activate `twentytwentythree` theme.
+   - Create a static front page and set it as homepage.
+6. Set ownership of `${WP_WEBROOT}` to `www-data:www-data`.
+7. `exec php-fpm${PHP_FPM_VERSION} -F`; fallback to `php-fpm` if needed.
+
+## Make Targets
 
 ### Lifecycle
 
 | Command | Description |
 |---|---|
 | `make` / `make inception` / `make all` / `make up` | Start all containers in detached mode |
-| `make down` | Stop and remove containers and networks (keeps volumes) |
-| `make stop` | Stop running containers without removing them |
+| `make down` | Stop and remove containers and networks (volumes kept) |
+| `make stop` | Stop containers without removing them |
 | `make restart` | Restart all containers |
 
 ### Inspection
@@ -299,24 +307,22 @@ The new file with expanded variables is written to `/etc/nginx/conf.d/${DOMAIN_N
 | Command | Description |
 |---|---|
 | `make ps` | Show container status |
-| `make secrets` | Check for secrets and create missing ones |
-| `make shell SERVICE=<name>` | Open `/bin/sh` inside a running container |
-| `make config` | Print the resolved Compose configuration |
+| `make secrets` | Verify and create missing secret files |
+| `make shell SERVICE=<name>` | Open `/bin/sh` in a running container |
+| `make config` | Show fully resolved Compose config |
 
-### Build & Cleanup
+### Build and Cleanup
 
 | Command | Description |
 |---|---|
-| `make build` | Rebuild images (reads the configured `.env`) |
-| `make clean` | Remove containers, volumes and host data directories  |
-| `make fclean` | Full cleanup — containers, volumes, images and host data directories |
-| `make re` | Full rebuild (`fclean` + `all`) |
+| `make build` | Rebuild images using configured `.env` |
+| `make clean` | Remove containers, volumes, and host data directories |
+| `make fclean` | Full cleanup: containers, volumes, images, host data |
+| `make re` | Rebuild from scratch (`fclean` + `all`) |
 
----
+## Persistence
 
-## Data Persistence
-
-| Volume Name | Container path | Host path |
+| Volume Name | Container Path | Host Path |
 |---|---|---|
-| wordpress_data | `/var/www` | `/home/${USER_LOGIN}/data/wordpress` |
-| database_data | `/var/lib/mysql` | `/home/${USER_LOGIN}/data/mariadb` |
+| `wordpress_data` | `/var/www` | `/home/${USER_LOGIN}/data/wordpress` |
+| `database_data` | `/var/lib/mysql` | `/home/${USER_LOGIN}/data/mariadb` |
