@@ -40,6 +40,13 @@ Everything is wired together in a single `docker-compose.yml`. Two user-defined 
 
 ### Virtual Machines vs Docker
 
+| Aspect | Virtual Machine | Docker Container |
+|---|---|---|
+| Isolation model | Full guest OS with its own kernel | Process-level isolation sharing host kernel |
+| Startup time | Slower (boots OS) | Faster (starts process) |
+| Resource footprint | Higher CPU/RAM/storage overhead | Lower overhead |
+| Best fit in this project | Overkill for 3 services | Ideal for fast rebuilds and reproducibility |
+
 You could run this same NGINX, PHP, MariaDB stack inside a VM, and it would work. But a VM boots a full operating system, with its own kernel, hardware drivers, and init system. That is a lot of overhead for three processes.
 
 Docker containers share the host kernel; Docker uses Linux primitives like namespaces for isolation (what the process can see), cgroups for resource limits, and a union filesystem for layered images to give each container its own isolated environment without duplicating the OS. The result of this approach is that containers start in seconds, use less memory, and the images stay small because they only carry the application and its immediate dependencies.
@@ -49,6 +56,13 @@ For a project like this, where the goal is rapid iteration and reproducible envi
 [![General difference between VMs and Containers](.doc/vmVScontainer-d3bvstack.svg)](.doc/vmVScontainer-d3bvstack.png)
 
 ### Docker Networks vs Host Network
+
+| Aspect | User-defined Bridge Networks | Host Network |
+|---|---|---|
+| Service discovery | Built-in DNS by container name | No Docker DNS isolation benefits |
+| Isolation | Segmented virtual networks | Shares host network stack directly |
+| Security boundary | Better separation between services | Weaker isolation |
+| Fit for this stack | Frontend/backend split is straightforward | Not suitable for this project goals |
 
 By default, Docker can put all containers on a shared bridge network. The problem is that on the default bridge, containers can only reach each other by IP and those IPs are reassigned every time a container restarts, so hardcoding them is not a sustainable option.
 
@@ -61,6 +75,13 @@ That is why this project uses two networks. NGINX sits on `frontend` and talks t
 [![Comparison between Bridge and host networks in docker](.doc/bridgeVShost-d3bvstack.svg)](.doc/bridgeVShost-d3bvstack.png)
 
 ### Docker Secrets vs Environment Variables
+
+| Aspect | Environment Variables / .env | Docker Secrets |
+|---|---|---|
+| Typical use | Non-sensitive configuration | Credentials and private material |
+| Visibility | Exposed through process env / inspect | Mounted as read-only files in /run/secrets |
+| Risk if leaked | Higher | Lower (scoped per-service access) |
+| Fit for this stack | Domain names, ports, DB names | DB passwords and SSL cert/key |
 
 A `.env` file contains a dictionary of key-value pairs used for general configurations like the domain name, port numbers of each service, or the name of the database, values that change across environments but are not sensitive. Docker compose interpolates values from main `.env` into the compose file at runtime, which makes the setup configurable without touching the compose file itself.
 
@@ -79,7 +100,21 @@ This project uses six secrets:
 | `secrets/ssl/dbarba-v.42.fr.cert` | SSL certificate used by NGINX |
 | `secrets/ssl/dbarba-v.42.fr.key` | SSL private key used by NGINX |
 
+How missing secrets are handled:
+
+| Secret group | If missing, what happens when running `make secrets` |
+|---|---|
+| Database/WordPress password secrets | You are prompted for input, then the secret file is created from your value |
+| SSL cert and key secrets | They are generated automatically (self-signed cert + private key) |
+
 ### Docker Volumes vs Bind Mounts
+
+| Aspect | Bind Mount | Named Volume |
+|---|---|---|
+| Ownership | Host path managed by user/OS | Managed by Docker |
+| Portability | Depends on host directory layout | Portable across Docker hosts |
+| Setup friction | Requires existing/consistent paths | Auto-created when needed |
+| Fit for this stack | More fragile across machines | Preferred for DB and WordPress persistence |
 
 For this setup we need data persistance across container restarts, rebuilds, etc and both volumes and bind mounts let a container write data that survives the container being stopped or removed. The difference is who manages the storage and how portable it is.
 
@@ -94,8 +129,10 @@ Named volumes are managed by Docker. They live under Docker's own storage direct
 ### Prerequisites
 
 - Docker and Docker Compose installed
-- Secret files created before starting the stack (see paths above)
 - A `srcs/.env` edited with custom configurations
+- Secret files are optional before first run: execute `make secrets` to create missing ones
+	- Password secrets are requested interactively
+	- SSL certificate/key secrets are auto-generated if absent
 
 ### Running the stack
 
@@ -111,7 +148,7 @@ The `Makefile` covers everything. Run `make help` to see the full list, but the 
 | `make ps` | Show container status |
 | `make shell SERVICE=<name>` | Open `/bin/sh` inside a running container |
 | `make config` | Print the resolved Compose configuration (good for debugging) |
-| `make secrets` | Check for secrets and create missing ones |
+| `make secrets` | Check for secrets and create missing ones (prompts for passwords; auto-generates SSL cert/key) |
 | `make clean` | Remove containers, volumes and host data directories |
 | `make fclean` | Full cleanup — containers, volumes, images and host data directories |
 | `make re` | Full rebuild (`fclean` + `all`) |
