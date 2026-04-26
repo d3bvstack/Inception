@@ -2,6 +2,8 @@
 
 # Inception
 
+[![PHP](https://img.shields.io/badge/PHP-8.2-777BB4?style=flat&logo=php&logoColor=white)](https://www.php.net/) [![WordPress](https://img.shields.io/badge/WordPress-5.9-21759B?style=flat&logo=wordpress&logoColor=white)](https://wordpress.org/) [![Docker](https://img.shields.io/badge/Docker-%230db7ed?style=flat&logo=docker&logoColor=white)](https://www.docker.com/) [![NGINX](https://img.shields.io/badge/NGINX-%23009639?style=flat&logo=nginx&logoColor=white)](https://www.nginx.com/) [![MariaDB](https://img.shields.io/badge/MariaDB-%23007aaf?style=flat&logo=mariadb&logoColor=white)](https://mariadb.org/)
+
 Containerized WordPress infrastructure for the 42 Inception project.
 
 This repository builds a three-service stack with Docker Compose:
