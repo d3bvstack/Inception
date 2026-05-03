@@ -1,5 +1,8 @@
 *This project has been created as part of the 42 curriculum by dbarba-v ([d3bvstack on github.com](https://github.com/d3bvstack/))*
 
+<img alt="inception-cover-image" src="https://github.com/user-attachments/assets/0ff1de71-ba91-4259-a1f9-0cd089410628" />
+
+
 # Inception
 
 [![PHP](https://img.shields.io/badge/PHP-8.2-777BB4?style=flat&logo=php&logoColor=white)](https://www.php.net/) [![WordPress](https://img.shields.io/badge/WordPress-5.9-21759B?style=flat&logo=wordpress&logoColor=white)](https://wordpress.org/) [![Docker](https://img.shields.io/badge/Docker-%230db7ed?style=flat&logo=docker&logoColor=white)](https://www.docker.com/) [![NGINX](https://img.shields.io/badge/NGINX-%23009639?style=flat&logo=nginx&logoColor=white)](https://www.nginx.com/) [![MariaDB](https://img.shields.io/badge/MariaDB-%23007aaf?style=flat&logo=mariadb&logoColor=white)](https://mariadb.org/)
@@ -11,6 +14,10 @@ This repository builds a three-service stack with Docker Compose:
 - NGINX as the only public entrypoint (HTTP + HTTPS)
 - WordPress + PHP-FPM as the application runtime
 - MariaDB as the database backend
+
+> [!NOTE] 
+> The services run from images built from the custom Dockerfiles in `srcs/requirements/*`.
+> The project uses custom-made container images built from the ground up instead of relying on dockerhub pre-made images.
 
 The stack is intentionally segmented by network into front and back-end networks, data persists on the host via volumes, and keeps credentials like passwords, logins and certificates in Docker secrets.
 
@@ -40,7 +47,6 @@ The objective is to deploy and operate a realistic web platform while applying c
 - [Docker Networks vs Host Network](#docker-networks-vs-host-network)
 - [Docker Secrets vs Environment Variables](#docker-secrets-vs-environment-variables)
 - [Docker Volumes vs Bind Mounts](#docker-volumes-vs-bind-mounts)
-- [Quick start](#quick-start)
 - [Operational commands](#operational-commands)
 - [Configuration model](#configuration-model)
 - [Secrets model](#secrets-model)
