@@ -47,6 +47,7 @@ main() {
 	install_wp_cli
 
 	mkdir -p "$WP_WEBROOT"
+	chown -R "$WWW_USER":"$WWW_GROUP" "$WP_WEBROOT"
 
 	# Download core files only if not already present
 	if [ ! -f "${WP_WEBROOT}/wp-load.php" ]; then
@@ -85,6 +86,8 @@ main() {
 	else
 		echo "wp-config.php already present, skipping configuration and install"
 	fi
+
+	chown -R "$WWW_USER":"$WWW_GROUP" "$WP_WEBROOT"
 
 }
 
